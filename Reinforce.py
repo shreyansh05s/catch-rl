@@ -6,11 +6,11 @@ from torch.distributions import Categorical
 from catch import Catch
 
 # Define the policy network
-class Policy(nn.Module):
-    def __init__(self, input_size, output_size):
-        super(Policy, self).__init__()
-        self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, output_size)
+class Policy_network(nn.Module):
+    def __init__(self, input_size,hidden_size, output_size):
+        super(Policy_network, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -19,39 +19,43 @@ class Policy(nn.Module):
 
 # Define the REINFORCE agent
 class REINFORCEAgent:
-    def __init__(self, input_size, output_size, lr=0.01, gamma=0.99):
-        self.policy = Policy(input_size, output_size)
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+    def __init__(self, input_size,hidden_size, output_size, lr=0.01, gamma=0.99):
+        self.policy = Policy_network(input_size,hidden_size, output_size) # Create the policy network
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr) # Create the optimizer
         self.gamma = gamma
         self.saved_log_probs = []
         self.rewards = []
         
     def select_action(self, state):
-        state = torch.from_numpy(state).float().unsqueeze(0)
-        action_probs = torch.softmax(self.policy(state), dim=1)
-        m = Categorical(action_probs)
-        action = m.sample()
-        self.saved_log_probs.append(m.log_prob(action))
+        state = torch.from_numpy(state).float().unsqueeze(0)   # Convert the state to a tensor
+        action_probs = torch.softmax(self.policy(state), dim=1)   # Get the action probabilities
+        m = Categorical(action_probs)  # Create a categorical distribution over the action probabilities
+        action = m.sample() # Sample an action from the distribution
+        self.saved_log_probs.append(m.log_prob(action)) # Save the log probability of the action
         return action.item()
     
     def update_policy(self):
-        R = 0
-        policy_loss = []
+        R = 0 
+        policy_loss = []  
         returns = []
-        for r in self.rewards[::-1]:
-            R = r + self.gamma * R
-            returns.insert(0, R)
-        returns = torch.tensor(returns)
-        returns = (returns - returns.mean()) / (returns.std() + 1e-9)
+        # loop through the rewards in reverse order
+        for r in self.rewards[::-1]: 
+            R = r + self.gamma * R # Calculate the discounted return
+            returns.insert(0, R) # Insert the discounted return at the beginning of the list
+        returns = torch.tensor(returns)  
+        returns = (returns - returns.mean()) / (returns.std() + 1e-9) # Normalize the returns
+
+        # loop through the saved log probabilities and the returns
         for log_prob, R in zip(self.saved_log_probs, returns):
-            policy_loss.append(-log_prob * R)
-        self.optimizer.zero_grad()
-        policy_loss = torch.cat(policy_loss).sum()
-        policy_loss.backward()
-        self.optimizer.step()
-        self.saved_log_probs = []
-        self.rewards = []
+            policy_loss.append(-log_prob * R)  # Calculate the policy loss
+        self.optimizer.zero_grad() # Reset the gradients 
+        policy_loss = torch.cat(policy_loss).sum() # Calculate the sum of the policy loss
+        policy_loss.backward() # Calculate the gradients
+        self.optimizer.step() # Update the policy network
+        self.saved_log_probs = [] # Reset the saved log probabilities
+        self.rewards = [] # Reset the rewards
     
+    # Get the action with the highest probability from the policy network during testing
     def get_action(self, state):
         state = torch.from_numpy(state).float().unsqueeze(0)
         action_probs = torch.softmax(self.policy(state), dim=1)
@@ -73,6 +77,7 @@ def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
             state = next_state
             if done:
                 break
+
         agent.update_policy()
         total_rewards.append(total_reward)
         if episode % print_interval == 0:
@@ -85,7 +90,8 @@ env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observat
 # Create an instance of the REINFORCE agent
 input_size = env.observation_space.shape[0]
 output_size = env.action_space.n
-agent = REINFORCEAgent(input_size, output_size)
+hidden_size = 128
+agent = REINFORCEAgent(input_size,hidden_size, output_size)
 
 # Train the agent
 num_episodes = 1000
