@@ -62,27 +62,27 @@ class REINFORCEAgent:
         action = action_probs.argmax(dim=1)
         return action.item()
 
-# Define the REINFORCE training function
-def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
-    total_rewards = []
-    for episode in range(num_episodes):
-        state = env.reset()
-        done = False
-        total_reward = 0
-        for step in range(max_steps):
-            action = agent.select_action(state)
-            next_state, reward, done, _ = env.step(action)
-            total_reward += reward
-            agent.rewards.append(reward)
-            state = next_state
-            if done:
-                break
+    # Define the REINFORCE training function
+    def train(self, env, agent, num_episodes=1000, max_steps=250, print_interval=100):
+        total_rewards = []
+        for episode in range(num_episodes):
+            state = env.reset()
+            done = False
+            total_reward = 0
+            for step in range(max_steps):
+                action = agent.select_action(state)
+                next_state, reward, done, _ = env.step(action)
+                total_reward += reward
+                agent.rewards.append(reward)
+                state = next_state
+                if done:
+                    break
 
-        agent.update_policy()
-        total_rewards.append(total_reward)
-        if episode % print_interval == 0:
-            print("Episode {}\tTotal Reward: {}".format(episode, total_reward))
-    return total_rewards
+            agent.update_policy()
+            total_rewards.append(total_reward)
+            if episode % print_interval == 0:
+                print("Episode {}\tTotal Reward: {}".format(episode, total_reward))
+        return total_rewards
 
 # Create an instance of the customizable Catch environment
 env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='vector', seed=None)

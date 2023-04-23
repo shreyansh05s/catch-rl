@@ -1,15 +1,21 @@
 import torch.optim as optim
-from DQN import DQNAgent
 import itertools
-
-import gym
 import numpy as np
 from joblib import parallel_backend
 import time
 
+from catch import Catch
+from Reinforce import REINFORCEAgent
+
 
 def grid_search(params):
-    env = gym.make('CartPole-v1')
+    env = Catch()
+
+    # Create an instance of the REINFORCE agent
+    input_size = env.observation_space.shape[0]
+    output_size = env.action_space.n
+    hidden_size = 128
+    
 
     best_reward = float('-inf')
     best_params = None
@@ -18,7 +24,7 @@ def grid_search(params):
         for param_comb in itertools.product(*params.values()):    
             param_dict = dict(zip(params.keys(), param_comb))
 
-            agent = DQNAgent(state_dim=4, action_dim=2,num_episodes=1000,hidden_dim=64,policy='softmax',tuning=True,plot=False,model='DQN', **param_dict)
+            agent = REINFORCEAgent(input_size,hidden_size, output_size,**param_dict)
 
             episode_rewards = agent.train(env)
             avg_reward = np.mean(episode_rewards)
@@ -37,25 +43,10 @@ def grid_search(params):
 params = {
 #we choose the parameters we want to tune
 
-    # 'state_dim': [2, 4, 6],
-    # 'hidden_dim': [64],
+    'hidden_dim': [64, 128, 256],
     #'num_episodes': [500],
-    # 'action_dim': [1, 2, 3],
     'lr': [0.001,0.01],
     'gamma': [0.9, 0.7,0.5],
-    'batch_size': [32, 64],
-    # 'target_update': [50, 100, 200],
-    #'policy': ['egreedy','annealing_egreedy'],
-    #'policy': [ 'softmax'],
-    #'policy': [ 'annealing_egreedy'],
-    # 'model': ['DQN', 'DoubleDQN', 'DuelingDQN'],
-    # 'epsilon': [0.9, 0.5, 0.2],
-    # 'buffer_size': [10000, 30000,100000],
-    #'max_steps': [100, 500, 1000, 2000],
-    # 'eps_start': [1.0, 0.5, 0.2, 0.9],
-    #'eps_end': [0.01, 0.1],
-    # 'eps_decay': [0.5, 0.7, 0.9],
-    'temp': [0.2, 0.5, 0.8],
     
 }
 
