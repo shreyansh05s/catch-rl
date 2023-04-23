@@ -130,9 +130,11 @@ class Catch():
             ValueError("You need to reset() the environment before you can call step()")
         elif self.terminal: 
             ValueError("Environment has terminated, you need to call reset() first")
+
         
         # Move the paddle based on the chosen action
         self.paddle_xy[0] = np.clip(self.paddle_xy[0] + ACTION_EFFECTS[a],0,self.columns -1) 
+        
         
         # Drop all balls one step down
         for ball in self.balls_xy: 

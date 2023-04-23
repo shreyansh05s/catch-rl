@@ -7,80 +7,91 @@ from catch import Catch
 
 # Define the policy network
 class Policy(nn.Module):
-    def __init__(self, input_size, output_size, hidden_size):
+    def __init__(self, input_size, output_size):
         super(Policy, self).__init__()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc1 = nn.Linear(input_size, 128)
+        self.fc2 = nn.Linear(128, output_size)
         
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = self.fc2(x)
         return x
 
-# Initialize environment
-env = Catch()
+# Define the REINFORCE agent
+class REINFORCEAgent:
+    def __init__(self, input_size, output_size, lr=0.01, gamma=0.99):
+        self.policy = Policy(input_size, output_size)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.gamma = gamma
+        self.saved_log_probs = []
+        self.rewards = []
+        
+    def select_action(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0)
+        action_probs = torch.softmax(self.policy(state), dim=1)
+        m = Categorical(action_probs)
+        action = m.sample()
+        self.saved_log_probs.append(m.log_prob(action))
+        return action.item()
+    
+    def update_policy(self):
+        R = 0
+        policy_loss = []
+        returns = []
+        for r in self.rewards[::-1]:
+            R = r + self.gamma * R
+            returns.insert(0, R)
+        returns = torch.tensor(returns)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-9)
+        for log_prob, R in zip(self.saved_log_probs, returns):
+            policy_loss.append(-log_prob * R)
+        self.optimizer.zero_grad()
+        policy_loss = torch.cat(policy_loss).sum()
+        policy_loss.backward()
+        self.optimizer.step()
+        self.saved_log_probs = []
+        self.rewards = []
+    
+    def get_action(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0)
+        action_probs = torch.softmax(self.policy(state), dim=1)
+        action = action_probs.argmax(dim=1)
+        return action.item()
 
-# Set hyperparameters
+# Define the REINFORCE training function
+def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
+    total_rewards = []
+    for episode in range(num_episodes):
+        state = env.reset()
+        done = False
+        total_reward = 0
+        for step in range(max_steps):
+            action = agent.select_action(state)
+            next_state, reward, done, _ = env.step(action)
+            total_reward += reward
+            agent.rewards.append(reward)
+            state = next_state
+            if done:
+                break
+        agent.update_policy()
+        total_rewards.append(total_reward)
+        if episode % print_interval == 0:
+            print("Episode {}\tTotal Reward: {}".format(episode, total_reward))
+    return total_rewards
+
+# Create an instance of the customizable Catch environment
+env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='vector', seed=None)
+
+# Create an instance of the REINFORCE agent
 input_size = env.observation_space.shape[0]
 output_size = env.action_space.n
-hidden_size = 64
-learning_rate = 0.001
-gamma = 0.99
+agent = REINFORCEAgent(input_size, output_size)
 
-# Initialize policy network and optimizer
-policy = Policy(input_size, output_size, hidden_size)
-optimizer = optim.Adam(policy.parameters(), lr=learning_rate)
-
-# Training loop
+# Train the agent
 num_episodes = 1000
-for episode in range(num_episodes):
-    state = env.reset()  # Reset environment and get initial state
-    rewards = []
-    log_probs = []
-    
-    while True:
-        # Convert state to tensor
-        state_tensor = torch.tensor(state, dtype=torch.float32)
-        
-        
-        # Get action probabilities from policy network
-        action_probs = torch.softmax(policy(state_tensor), dim=-1)
-        
-        # Choose action based on action probabilities
-        action_dist = Categorical(action_probs)
-        action = action_dist.sample()
-        log_prob = action_dist.log_prob(action)
-        log_probs.append(log_prob)
-        
-        # Take action in the environment
-        next_state, reward, done, _ = env.step(action.item())
-        rewards.append(reward)
-        
-        if done:
-            break
-        
-        state = next_state
-        
-    # Calculate discounted rewards
-    discounted_rewards = []
-    cumulative_reward = 0
-    for reward in reversed(rewards):
-        cumulative_reward = reward + gamma * cumulative_reward
-        discounted_rewards.insert(0, cumulative_reward)
-        
-    # Convert discounted rewards to tensor
-    discounted_rewards_tensor = torch.tensor(discounted_rewards, dtype=torch.float32)
-    
-    # Normalize discounted rewards
-    discounted_rewards_tensor = (discounted_rewards_tensor - discounted_rewards_tensor.mean()) / (discounted_rewards_tensor.std() + 1e-9)
-    
-    # Calculate loss
-    loss = torch.dot(torch.stack(log_probs).sum(),  -discounted_rewards_tensor.detach())
-    
-    # Update policy network
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    
-    # Print episode information
-    print('Episode [{}/{}], Total reward: {}'.format(episode+1, num_episodes, sum(rewards)))
+max_steps = 250
+print_interval = 100
+total_rewards = train(env, agent, num_episodes, max_steps, print_interval)
+
+print("Average reward: {}".format(np.mean(total_rewards)))
+
