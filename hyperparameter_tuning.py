@@ -24,7 +24,7 @@ def grid_search(params):
         for param_comb in itertools.product(*params.values()):    
             param_dict = dict(zip(params.keys(), param_comb))
 
-            agent = REINFORCEAgent(input_size,hidden_size, output_size,**param_dict)
+            agent = REINFORCEAgent(input_size, output_size,**param_dict)
 
             episode_rewards = agent.train(env)
             avg_reward = np.mean(episode_rewards)
@@ -43,7 +43,7 @@ def grid_search(params):
 params = {
 #we choose the parameters we want to tune
 
-    'hidden_dim': [64, 128, 256],
+    'hidden_size': [64, 128, 256],
     #'num_episodes': [500],
     'lr': [0.001,0.01],
     'gamma': [0.9, 0.7,0.5],

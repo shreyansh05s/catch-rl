@@ -84,20 +84,20 @@ class REINFORCEAgent:
                 print("Episode {}\tTotal Reward: {}".format(episode, total_reward))
         return total_rewards
 
-# Create an instance of the customizable Catch environment
-env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='vector', seed=None)
+# # Create an instance of the customizable Catch environment
+# env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='vector', seed=None)
 
-# Create an instance of the REINFORCE agent
-input_size = env.observation_space.shape[0]
-output_size = env.action_space.n
-hidden_size = 128
-agent = REINFORCEAgent(input_size,hidden_size, output_size)
+# # Create an instance of the REINFORCE agent
+# input_size = env.observation_space.shape[0]
+# output_size = env.action_space.n
+# hidden_size = 128
+# agent = REINFORCEAgent(input_size,hidden_size, output_size)
 
-# Train the agent
-num_episodes = 1000
-max_steps = 250
-print_interval = 100
-total_rewards = train(env, agent, num_episodes, max_steps, print_interval)
+# # Train the agent
+# num_episodes = 1000
+# max_steps = 250
+# print_interval = 100
+# total_rewards = train(env, agent, num_episodes, max_steps, print_interval)
 
-print("Average reward: {}".format(np.mean(total_rewards)))
+# print("Average reward: {}".format(np.mean(total_rewards)))
 
