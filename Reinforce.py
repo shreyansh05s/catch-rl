@@ -6,41 +6,41 @@ from torch.distributions import Categorical
 from catch import Catch
 
 #Define the policy network
-class Policy_network(nn.Module):
-    def __init__(self, input_size,hidden_size, output_size):
-        super(Policy_network, self).__init__()
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, hidden_size)
-        self.fc3 = nn.Linear(hidden_size, output_size)
+# class Policy_network(nn.Module):
+#     def __init__(self, input_size,hidden_size, output_size):
+#         super(Policy_network, self).__init__()
+#         self.flatten = nn.Flatten()
+#         self.fc1 = nn.Linear(input_size, hidden_size)
+#         self.fc2 = nn.Linear(hidden_size, hidden_size)
+#         self.fc3 = nn.Linear(hidden_size, output_size)
         
        
         
-    def forward(self, x):
-        x = self.flatten(x) # Flatten the input tensor
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-# # # Define the policy network
-# class Policy_network(nn.Module):
-#     def __init__(self, input_channels, hidden_size, output_size):
-#         super(Policy_network, self).__init__()
-#         #create convolutional layers with  input[1, 7, 7, 2]
-#         self.conv1 = nn.Conv2d(7, 16, kernel_size=3, stride=1, padding=1)
-#         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
-#         self.fc1 = nn.Linear(32 * 7 * 7, hidden_size)
-#         # self.fc2 = nn.Linear(hidden_size, output_size)
-#         self.fc2 = nn.Linear(hidden_size, output_size)
-
 #     def forward(self, x):
-#         x = torch.relu(self.conv1(x))
-#         x = torch.relu(self.conv2(x))
-#         x = x.reshape(x.size(0), -1) # Flatten the tensor
+#         x = self.flatten(x) # Flatten the input tensor
 #         x = torch.relu(self.fc1(x))
-#         x = self.fc2(x)
+#         x = torch.relu(self.fc2(x))
+#         x = self.fc3(x)
 #         return x
+
+# # Define the policy network
+class Policy_network(nn.Module):
+    def __init__(self, input_channels, hidden_size, output_size):
+        super(Policy_network, self).__init__()
+        #create convolutional layers with  input[1, 7, 7, 2]
+        self.conv1 = nn.Conv2d(7, 16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.fc1 = nn.Linear(32 * 7 * 2, hidden_size)
+        # self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = x.reshape(x.size(0), -1) # Flatten the tensor
+        x = torch.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
 
 # Define the REINFORCE agent
 class REINFORCEAgent:
