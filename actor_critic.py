@@ -12,13 +12,14 @@ class Policy(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(Policy, self).__init__()
         # use input of 7x7x2
-        
+        self.fc0 = nn.Flatten()
         
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
+        x = self.fc0(x)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
@@ -30,31 +31,38 @@ class Policy(nn.Module):
 class Value(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(Value, self).__init__()
-        
+        self.fc0 = nn.Flatten()
         self.fc1 = nn.Linear(input_size, hidden_size)
         self.fc2 = nn.Linear(hidden_size, hidden_size)
         self.fc3 = nn.Linear(hidden_size, 1)
 
     def forward(self, x):
+        x = self.fc0(x)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
-def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project, use_bootstrapping=True, use_baseline=True):
+def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project, use_bootstrapping=False, use_baseline=False):
     # Initialize the networks, optimizer and loss function
-    policy_net = Policy(env.observation_space.shape[0], hidden_size, env.action_space.n).to(device)
-    value_net = Value(env.observation_space.shape[0], hidden_size).to(device)
+    input_size = env.observation_space.shape[0] * env.observation_space.shape[1] * env.observation_space.shape[2]
+    
+    policy_net = Policy(input_size, hidden_size, env.action_space.n).to(device)
+    value_net = Value(input_size, hidden_size).to(device)
+    
     optimizer_policy = optim.Adam(policy_net.parameters(), lr=lr)
     optimizer_value = optim.Adam(value_net.parameters(), lr=lr)
+    
     scheduler_policy = optim.lr_scheduler.ExponentialLR(optimizer_policy, gamma)
     scheduler_value = optim.lr_scheduler.ExponentialLR(optimizer_value, gamma)
+    
     mse_loss = nn.MSELoss()
 
     # Train the agent
     for i_episode in range(num_episodes):
         # Reset the environment and get the initial state
-        state = torch.FloatTensor(env.reset()).to(device)
+        state = torch.FloatTensor(env.reset()).to(device).unsqueeze(0)
+        # print(state.shape)
         done = False
         total_reward = 0
 
@@ -65,7 +73,7 @@ def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project,
 
             # Take the action in the environment and get the next state and reward
             next_state, reward, done, info = env.step(action.item())
-            next_state = torch.FloatTensor(next_state).to(device)
+            next_state = torch.FloatTensor(next_state).to(device).unsqueeze(0)
 
             # Calculate the TD error
             value = value_net(state).item()
@@ -107,7 +115,7 @@ def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project,
         lr = scheduler_value.get_last_lr()[0]
 
         # Log the episode reward, loss ,TD error, and learning rate
-        wandb.log({'total_reward': total_reward, 'policy_loss': policy_loss.item(), 'value_loss': value_loss.item(), 'td_error': td_error, 'lr': lr})
+        # wandb.log({'total_reward': total_reward, 'policy_loss': policy_loss.item(), 'value_loss': value_loss.item(), 'td_error': td_error, 'lr': lr})
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser(description='Train an Actor-Critic RL agent for the Catch environment')
@@ -120,11 +128,11 @@ if __name__ == '__main__':
     
     # Initialize Wandb logging inside team project "leiden-rl"
     # add team
-    wandb.init(project=args.wandb_project, config=args)
+    # wandb.init(project=args.wandb_project, config=args)
     
     # Create an instance of the customizable Catch environment
-    env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='vector', seed=None)
+    env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='pixel', seed=None)
     
     train_actor_critic(env, args.num_episodes, args.lr, args.gamma, args.hidden_size, args.wandb_project)
     
-    wandb.finish()
+    # wandb.finish()
