@@ -96,7 +96,7 @@ def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
         done = False
         total_reward = 0
         for step in range(max_steps):
-            env.render() 
+            # env.render() 
             action = agent.select_action(state)
             next_state, reward, done, _ = env.step(action)
             total_reward += reward
