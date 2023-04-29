@@ -98,6 +98,7 @@ def train(env, num_episodes, lr, gamma, hidden_size, entropy_strength, wandb_pro
         values = critic(torch.stack(states).to(device)).squeeze()
         next_values = torch.cat((values[1:], torch.zeros(1).to(device)))
         
+        rewards = torch.FloatTensor(rewards).to(device)
         delta = rewards + gamma * next_values - values
         advantages = compute_advantages(env, input_size, hidden_size, delta, use_baseline, use_bootstrapping, gamma)
 
