@@ -52,11 +52,11 @@ class Value(nn.Module):
 def compute_advantages(env, input_size, hidden_size, delta, use_baseline, use_bootstrapping, gamma):
     critic = Value(input_size, hidden_size).to(device)
     if use_baseline:
-        delta -= torch.mean(delta)
+        delta = delta - torch.mean(delta)
     if use_bootstrapping:
         state = env.reset()
         state = torch.FloatTensor(state).to(device).unsqueeze(0)
-        delta += gamma * critic(torch.FloatTensor(state).to(device)).squeeze()
+        delta = delta + gamma * critic(torch.FloatTensor(state).to(device)).squeeze()
     return delta
 
 def train(env, num_episodes, lr, gamma, hidden_size, entropy_strength, wandb_project, use_bootstrapping=True, use_baseline=True):
@@ -65,8 +65,8 @@ def train(env, num_episodes, lr, gamma, hidden_size, entropy_strength, wandb_pro
     actor = Policy(input_size, hidden_size, env.action_space.n).to(device)
     critic = Value(input_size, hidden_size).to(device)
 
-    optimizer_actor = optim.Adam(actor.parameters(), lr=lr)
-    optimizer_critic = optim.Adam(critic.parameters(), lr=lr)
+    optimizer_actor = optim.SGD(actor.parameters(), lr=0.001)
+    optimizer_critic = optim.SGD(critic.parameters(), lr=0.001)
 
     for episode in range(num_episodes):
         state = env.reset()
