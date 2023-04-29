@@ -71,8 +71,8 @@ def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project,
     value_net = ValueConv(env.observation_space.shape[0], hidden_size)
     optimizer_policy = optim.Adam(policy_net.parameters(), lr=lr)
     optimizer_value = optim.Adam(value_net.parameters(), lr=lr)
-    scheduler_policy = optim.lr_scheduler.StepLR(optimizer_policy, step_size=10, gamma=gamma)
-    scheduler_value = optim.lr_scheduler.StepLR(optimizer_value, step_size=10, gamma=gamma)
+    scheduler_policy = optim.lr_scheduler.StepLR(optimizer_policy, step_size=lr_step_size, gamma=gamma)
+    scheduler_value = optim.lr_scheduler.StepLR(optimizer_value, step_size=lr_step_size, gamma=gamma)
     # scheduler_policy = optim.lr_scheduler.ExponentialLR(optimizer_policy, gamma=0.99)
     # scheduler_value = optim.lr_scheduler.ExponentialLR(optimizer_value, gamma=0.99)
     mse_loss = nn.MSELoss()
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     parser.add_argument('--wandb_project', type=str, default='catch-rl', help='Wandb project name')
     parser.add_argument('--use_bootstrapping', action='store_true', help='use bootstrapping instead of Monte Carlo returns')
     parser.add_argument('--use_baseline', action='store_true', help='use the value function as a baseline')
-    parser.add_argument('--lr_step', type=int, default=30, help='number of episodes before decreasing learning rate')
+    parser.add_argument('--lr_step_size', type=int, default=10, help='number of episodes before decreasing learning rate')
     args = parser.parse_args()
     
     # Initialize Wandb logging inside team project "leiden-rl"
