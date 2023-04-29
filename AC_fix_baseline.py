@@ -65,14 +65,14 @@ class Value(nn.Module):
         x = self.fc3(x)
         return x
 
-def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project, use_bootstrapping=False, use_baseline=False, lr_step_size=10):
+def train_actor_critic(env, num_episodes, lr, gamma, hidden_size, wandb_project, use_bootstrapping, use_baseline, lr_step_size, lr_gamma):
     # Initialize the networks, optimizer and loss function
     policy_net = PolicyConv(env.observation_space.shape[0], hidden_size, env.action_space.n)
     value_net = ValueConv(env.observation_space.shape[0], hidden_size)
     optimizer_policy = optim.Adam(policy_net.parameters(), lr=lr)
     optimizer_value = optim.Adam(value_net.parameters(), lr=lr)
-    scheduler_policy = optim.lr_scheduler.StepLR(optimizer_policy, step_size=lr_step_size, gamma=gamma)
-    scheduler_value = optim.lr_scheduler.StepLR(optimizer_value, step_size=lr_step_size, gamma=gamma)
+    scheduler_policy = optim.lr_scheduler.StepLR(optimizer_policy, step_size=lr_step_size, gamma=lr_gamma)
+    scheduler_value = optim.lr_scheduler.StepLR(optimizer_value, step_size=lr_step_size, gamma=lr_gamma)
     # scheduler_policy = optim.lr_scheduler.ExponentialLR(optimizer_policy, gamma=0.99)
     # scheduler_value = optim.lr_scheduler.ExponentialLR(optimizer_value, gamma=0.99)
     mse_loss = nn.MSELoss()
@@ -150,15 +150,18 @@ if __name__ == '__main__':
     parser.add_argument('--use_bootstrapping', action='store_true', help='use bootstrapping instead of Monte Carlo returns')
     parser.add_argument('--use_baseline', action='store_true', help='use the value function as a baseline')
     parser.add_argument('--lr_step_size', type=int, default=10, help='number of episodes before decreasing learning rate')
+    parser.add_argument('--lr_gamma', type=float, default=0.99, help='learning rate decay factor')
     args = parser.parse_args()
     
     # Initialize Wandb logging inside team project "leiden-rl"
     # add team
     wandb.init(project=args.wandb_project, config=args)
     
+    # wandb save code to wandb
+    wandb.save('AC_fix_baseline.py')
     # Create an instance of the customizable Catch environment
     env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='pixel', seed=None)
     
-    train_actor_critic(env, args.num_episodes, args.lr, args.gamma, args.hidden_size, args.wandb_project)
+    train_actor_critic(env, args.num_episodes, args.lr, args.gamma, args.hidden_size, args.wandb_project, args.use_bootstrapping, args.use_baseline, args.lr_step_size, args.lr_gamma)
     
     wandb.finish()
