@@ -103,7 +103,7 @@ def select_action(state):
     return action.item()
 
 
-def finish_episode():
+def finish_episode(baseline=False):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -120,10 +120,15 @@ def finish_episode():
         returns.insert(0, R)
 
     returns = torch.tensor(returns)
+    
+    # normalize the true values (this is not 100% necessary)
     returns = (returns - returns.mean()) / (returns.std() + eps)
 
     for (log_prob, value), R in zip(saved_actions, returns):
-        advantage = R - value.item()
+        if baseline:
+            advantage = R - value.item()
+        else:
+            advantage = R
 
         # calculate actor (policy) loss
         policy_losses.append(-log_prob * advantage)
