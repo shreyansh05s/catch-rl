@@ -31,7 +31,7 @@ env = Catch(rows=7, columns=7, speed=1.0, max_steps=250,
 # torch.manual_seed(args.seed)
 
 
-SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
+SavedAction = namedtuple('SavedAction', ['log_prob', 'value', 'entropy'])
 
 
 class Policy(nn.Module):
@@ -100,13 +100,13 @@ def select_action(state):
     action = m.sample()
 
     # save to action buffer
-    model.saved_actions.append(SavedAction(m.log_prob(action), state_value))
+    model.saved_actions.append(SavedAction(m.log_prob(action), state_value, m.entropy().item()))
 
     # the action to take (left or right)
-    return action.item(), m.entropy().item()
+    return action.item()
 
 
-def finish_episode(entropy, baseline=True):
+def finish_episode(baseline=True, entropy_regularization=True, entropy_weight=0.01):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -127,15 +127,15 @@ def finish_episode(entropy, baseline=True):
     # normalize the true values (this is not 100% necessary)
     returns = (returns - returns.mean()) / (returns.std() + eps)
 
-    for (log_prob, value), R in zip(saved_actions, returns):
+    for (log_prob, value, entropy), R in zip(saved_actions, returns):
         if baseline:
             advantage = R - value.item()
         else:
             advantage = R
         
         # add entropy to encourage exploration
-        if entropy is not None:
-            log_prob += entropy
+        if entropy_regularization:
+            log_prob += entropy * entropy_weight
         
         # calculate actor (policy) loss        
         policy_losses.append(-log_prob * advantage)
@@ -175,7 +175,7 @@ def main():
         done = False
         while not done:
             # select action from policy
-            action,entropy  = select_action(state)
+            action = select_action(state)
 
             # take the action
             state, reward, done, _ = env.step(action)
@@ -192,9 +192,8 @@ def main():
         running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
 
         # perform backprop
-        finish_episode(entropy)
+        finish_episode()
         scheduler.step()
-
         # log results
         if i_episode % args.log_interval == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
