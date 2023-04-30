@@ -106,7 +106,7 @@ def select_action(state):
     return action.item()
 
 
-def finish_episode(baseline=True, entropy_regularization=True, entropy_weight=0.01):
+def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=0.01, normalize_returns=True, bootstrap=False):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -125,7 +125,13 @@ def finish_episode(baseline=True, entropy_regularization=True, entropy_weight=0.
     returns = torch.tensor(returns)
     
     # normalize the true values (this is not 100% necessary)
-    returns = (returns - returns.mean()) / (returns.std() + eps)
+    # show experimentally that this helps to stabilize training
+    if normalize_returns:
+        returns = (returns - returns.mean()) / (returns.std() + eps)
+        
+    # implement without bootstrapping where bootstrap is the value of the last state
+    #if bootstrap:
+        
 
     for (log_prob, value, entropy), R in zip(saved_actions, returns):
         if baseline:
@@ -198,12 +204,6 @@ def main():
         if i_episode % args.log_interval == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
                   i_episode, ep_reward, running_reward, scheduler.get_lr()[0]))
-
-        # # check if we have "solved" the cart pole problem
-        # if running_reward > env.spec.reward_threshold:
-        #     print("Solved! Running reward is now {} and "
-        #           "the last episode runs to {} time steps!".format(running_reward, t))
-        #     break
 
 
 if __name__ == '__main__':
