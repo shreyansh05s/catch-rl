@@ -21,7 +21,7 @@ parser.add_argument('--render', action='store_true',
                     help='render the environment')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='interval between training status logs (default: 10)')
-parser.add_argument('--n_steps', type=int, default=100, metavar='N',
+parser.add_argument('--n_steps', type=int, default=40, metavar='N',
                     help='number of steps to train (default: 1000)')
 args = parser.parse_args()
 
@@ -111,7 +111,7 @@ def select_action(state):
     return action.item()
 
 
-def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=0.01, normalize_returns=False, bootstrap=False, bootstrap_state=None, done=False):
+def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=0.01, normalize_returns=True, bootstrap=False, bootstrap_state=None, done=False):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -126,11 +126,11 @@ def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=
 
     # calculate the true value using rewards returned from the environment
     if bootstrap:
-        for i, r in enumerate(model.rewards[::-2]):
-            if done:
-                R = model.rewards[i] + args.gamma * R
-            else:
-                R = (model.rewards[i] + args.gamma * R) + model(bootstrap_state)[1].item()
+        for i, r in enumerate(model.rewards[::-1]):
+            if i == 0:
+                R = r + (args.gamma * model(bootstrap_state)[1].item())
+            
+            R = r + args.gamma * R
             returns.insert(0, R)
     else:
         for r in model.rewards[::-1]:
@@ -220,8 +220,10 @@ def main():
                 finish_episode(bootstrap=True, bootstrap_state=bootstrap_state, done=done)
                 
                 # reset the rewards and action buffer to have only the last n steps
-                model.rewards = model.rewards[args.n_steps-1:]
-                model.saved_actions = model.saved_actions[args.n_steps-1:]
+                # model.rewards = model.rewards[-(args.n_steps-1):]
+                # model.saved_actions = model.saved_actions[-(args.n_steps-1):]
+                del model.rewards[:]
+                del model.saved_actions[:]
             
             state = next_state
 
