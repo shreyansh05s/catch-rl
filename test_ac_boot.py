@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from itertools import count
 from collections import namedtuple
-
+import wandb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,25 +12,8 @@ from catch import Catch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-parser = argparse.ArgumentParser(description='PyTorch actor-critic example')
-parser.add_argument('--gamma', type=float, default=0.85, metavar='G',
-                    help='discount factor (default: 0.99)')
-parser.add_argument('--seed', type=int, default=543, metavar='N',
-                    help='random seed (default: 543)')
-parser.add_argument('--render', action='store_true',
-                    help='render the environment')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                    help='interval between training status logs (default: 10)')
-parser.add_argument('--n_steps', type=int, default=40, metavar='N',
-                    help='number of steps to train (default: 1000)')
-args = parser.parse_args()
-
-observation_type = 'pixel'
-
-env = Catch(rows=7, columns=7, speed=1.0, max_steps=250,
-            max_misses=10, observation_type=observation_type, seed=None)
-# env.reset(seed=args.seed)
-# torch.manual_seed(args.seed)
+# env.reset(seed=seed)
+# torch.manual_seed(seed)
 
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value', 'entropy'])
@@ -111,7 +94,7 @@ def select_action(state):
     return action.item()
 
 
-def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=0.01, normalize_returns=True, bootstrap=False, bootstrap_state=None, done=False):
+def finish_episode(gamma, entropy_weight, baseline=True, entropy_regularization=False, normalize_returns=True, bootstrap=True, bootstrap_state=None, done=False):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -128,14 +111,14 @@ def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=
     if bootstrap:
         for i, r in enumerate(model.rewards[::-1]):
             if i == 0:
-                R = r + (args.gamma * model(bootstrap_state)[1].item())
+                R = r + (gamma * model(bootstrap_state)[1].item())
             
-            R = r + args.gamma * R
+            R = r + gamma * R
             returns.insert(0, R)
     else:
         for r in model.rewards[::-1]:
         # calculate the discounted value
-            R = r + args.gamma * R
+            R = r + gamma * R
             returns.insert(0, R)
 
     returns = torch.tensor(returns)
@@ -185,12 +168,36 @@ def finish_episode(baseline=False, entropy_regularization=False, entropy_weight=
 
 
 def main():
+    parser = argparse.ArgumentParser(description='PyTorch actor-critic example')
+    parser.add_argument('--gamma', type=float, default=0.85, metavar='G',
+                        help='discount factor (default: 0.99)')
+    parser.add_argument('--seed', type=int, default=543, metavar='N',
+                        help='random seed (default: 543)')
+    parser.add_argument('--render', action='store_true',
+                        help='render the environment')
+    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+                        help='interval between training status logs (default: 10)')
+    parser.add_argument('--n_steps', type=int, default=40, metavar='N',
+                        help='number of steps to train (default: 1000)')
+    parser.add_argument('--wandb_project', type=str, default='catch-rl', help='Wandb project name')
+    parser.add_argument('--lr', type=float, default=1e-2, help='learning rate')
+    parser.add_argument('--entropy_weight', type=int, default=0.01, help='strength of entropy regularization')
+    args = parser.parse_args()
+
+    observation_type = 'pixel'
+
+    wandb.init(mode='disabled')
+    # wandb.init(project=args.wandb_project, config=args)
+
+    env = Catch(rows=7, columns=7, speed=1.0, max_steps=250,
+            max_misses=10, observation_type=observation_type, seed=None)
+
     bootstrap = True
     
     running_reward = 10
-
+    num_episodes = 1000
     # run infinitely many episodes
-    for i_episode in count(1):
+    for i_episode in range(num_episodes):
 
         # reset environment and episode reward
         state = env.reset()
@@ -199,7 +206,7 @@ def main():
         # for each episode, only run 9999 steps so that we don't
         # infinite loop while learning
         done = False
-        while not done:
+        while not done and i_episode <= num_episodes:
             # select action from policy
             action = select_action(state)
 
@@ -212,16 +219,16 @@ def main():
             model.rewards.append(reward)
             ep_reward += reward
             if done and not bootstrap:
-                finish_episode()
+                finish_episode(args.gamma, args.entropy_weight, baseline=True, entropy_regularization=True, normalize_returns=True, bootstrap=True, bootstrap_state=None, done=True)
             elif bootstrap and len(model.rewards) >= args.n_steps:
                 # update the policy after every n steps
                 
                 bootstrap_state = torch.FloatTensor(next_state).unsqueeze(0)
-                finish_episode(bootstrap=True, bootstrap_state=bootstrap_state, done=done)
+                finish_episode(args.gamma, args.entropy_weight, baseline=True, entropy_regularization=True, normalize_returns=True, bootstrap=True, bootstrap_state=bootstrap_state, done=False)
                 
                 # reset the rewards and action buffer to have only the last n steps
-                # model.rewards = model.rewards[-(args.n_steps-1):]
-                # model.saved_actions = model.saved_actions[-(args.n_steps-1):]
+                # model.rewards = model.rewards[-(n_steps-1):]
+                # model.saved_actions = model.saved_actions[-(n_steps-1):]
                 del model.rewards[:]
                 del model.saved_actions[:]
             
@@ -237,7 +244,10 @@ def main():
         if i_episode % args.log_interval == 0:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
                   i_episode, ep_reward, running_reward, scheduler.get_lr()[0]))
+            wandb.log({'Episode Reward': ep_reward, 'Average Reward': running_reward, 'Learning Rate': scheduler.get_lr()[0]})
 
+       
+    wandb.finish()
 
 if __name__ == '__main__':
     main()
