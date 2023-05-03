@@ -130,27 +130,27 @@ def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser(description='Train an Reinforce agent for the Catch environment')
-    parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
     parser.add_argument('--gamma', type=float, default=0.9, help='discount factor')
     parser.add_argument('--hidden_size', type=int, default=128, help='size of the hidden layer')
-    parser.add_argument('--num_episodes', type=int, default=1000, help='number of episodes to train')
-    parser.add_argument('--beta', type=int, default=0.01, help='the strength of the entropy regularization term in the loss.')
-    parser.add_argument('--entropy_reg', type=bool, default=True, help='add entropy regularization')
+    parser.add_argument('--num_episodes', type=int, default=2000, help='number of episodes to train')
+    parser.add_argument('--beta', type=int, default=0.001, help='the strength of the entropy regularization term in the loss.')
+    parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
     parser.add_argument('--wandb_project', type=str, default='Reinforce', help='Wandb project name')
     args = parser.parse_args()
 
     
 
     # comment out to enable wandb logging
-    wandb.init(mode='disabled')
+    #wandb.init(mode='disabled')
      
 
     # Initialize Wandb logging inside team project "leiden-rl"
     # add team
-    #wandb.init(project=args.wandb_project, config=args)    
+    wandb.init(project=args.wandb_project, config=args)    
 
     # Set boolean parameter
-    wandb.config.entropy_reg = True
+    wandb.config.entropy_reg = False
 
     # Log the hyperparameter values
     wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
