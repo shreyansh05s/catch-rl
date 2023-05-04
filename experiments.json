@@ -1,0 +1,44 @@
+{
+    "Baseline":[
+        {
+            "group": "Baseline",
+            "job_type": "A2C",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default"
+        },
+        {
+            "group": "Baseline",
+            "job_type": "A2C-Bootstrap",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 40
+            }
+        },
+        {
+            "group": "Baseline",
+            "job_type": "A2C-Baseline",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "baseline": true
+            }
+        },
+        {
+            "group": "Baseline",
+            "job_type": "A2C-Bootstrap-Baseline",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "baseline": true,
+                "bootstrap": true,
+                "n_steps": 40
+            }
+        }
+    ]
+}
