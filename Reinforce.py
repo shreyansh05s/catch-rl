@@ -130,11 +130,11 @@ def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
 
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser(description='Train an Reinforce agent for the Catch environment')
-    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
-    parser.add_argument('--gamma', type=float, default=0.9, help='discount factor')
+    parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+    parser.add_argument('--gamma', type=float, default=0.7, help='discount factor')
     parser.add_argument('--hidden_size', type=int, default=128, help='size of the hidden layer')
-    parser.add_argument('--num_episodes', type=int, default=2000, help='number of episodes to train')
-    parser.add_argument('--beta', type=int, default=0.001, help='the strength of the entropy regularization term in the loss.')
+    parser.add_argument('--num_episodes', type=int, default=1000, help='number of episodes to train')
+    parser.add_argument('--beta', type=int, default=0.01, help='the strength of the entropy regularization term in the loss.')
     parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
     parser.add_argument('--wandb_project', type=str, default='Reinforce', help='Wandb project name')
     args = parser.parse_args()
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     wandb.config.entropy_reg = False
 
     # Log the hyperparameter values
-    wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
+    #wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
 
     # Create an instance of the customizable Catch environment
     env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='pixel', seed=None)
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     # hidden_size = 128
 
 
-    agent = REINFORCEAgent(input_size,args.hidden_size,output_size,args.gamma, args.lr)
+    agent = REINFORCEAgent(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta)
 
     # Train the agent
     num_episodes = 1000
