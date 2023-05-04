@@ -45,7 +45,7 @@ class Policy_network(nn.Module):
         return x
 
 # Define the REINFORCE agent
-class REINFORCEAgent:
+class Reinforce:
     def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99,entropy_reg = True, beta = 0.001):
         self.policy = Policy_network(input_size,hidden_size, output_size).to(device) # Create the policy network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr) # Create the optimizer
@@ -83,7 +83,7 @@ class REINFORCEAgent:
         policy_loss = torch.cat(policy_loss).to(device).sum() # Calculate the sum of the policy loss
         entropy_loss = torch.cat(entropy_loss).to(device).sum() # Calculate the sum of the entropy loss
         if self.entropy_reg: # If entropy regularization is used
-            loss = policy_loss + self.beta * entropy_loss # Calculate the loss
+            loss = policy_loss + self.beta * entropy_loss # Calculate the loss as a weighted sum
         else:
             loss = policy_loss
         loss.backward() # Calculate the gradients
@@ -142,12 +142,12 @@ if __name__ == '__main__':
     
 
     # comment out to enable wandb logging
-    #wandb.init(mode='disabled')
+    wandb.init(mode='disabled')
      
 
     # Initialize Wandb logging inside team project "leiden-rl"
     # add team
-    wandb.init(project=args.wandb_project, config=args)    
+    #wandb.init(project=args.wandb_project, config=args)    
 
     # Set boolean parameter
     wandb.config.entropy_reg = False
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     # hidden_size = 128
 
 
-    agent = REINFORCEAgent(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta)
+    agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta)
 
     # Train the agent
     num_episodes = 1000
