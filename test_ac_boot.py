@@ -150,8 +150,64 @@ def update(gamma, entropy_weight, baseline=True, entropy_regularization=False, n
     del model.saved_actions[:]
 
 
-def main():
-    # Training settings
+def ACtrain(env, gamma, entropy_weight, baseline, entropy_regularization, normalize_returns, bootstrap, render, log_interval, n_steps, num_episodes=1000):
+    running_reward = 10
+    # run infinitely many episodes
+    for i_episode in range(num_episodes):
+
+        # reset environment and episode reward
+        state = env.reset()
+        ep_reward = 0
+
+        done = False
+        while not done and i_episode <= num_episodes:
+
+            # select action from policy
+            action = select_action(state)
+
+            # take the action
+            next_state, reward, done, _ = env.step(action)
+
+            if render:
+                env.render()
+
+            model.rewards.append(reward)
+            ep_reward += reward
+
+            if done and not bootstrap:
+                update(gamma, entropy_weight, baseline, entropy_regularization, normalize_returns, bootstrap, bootstrap_state=None, done=True)
+
+            elif bootstrap and len(model.rewards) >= n_steps:
+                
+                # update the policy after every n steps
+                bootstrap_state = torch.FloatTensor(next_state).unsqueeze(0)
+                update(gamma, entropy_weight, baseline, entropy_regularization, normalize_returns, bootstrap, bootstrap_state=bootstrap_state, done=False)
+                
+                # reset the rewards and action buffer to have only the last n steps
+                # model.rewards = model.rewards[-(n_steps-1):]
+                # model.saved_actions = model.saved_actions[-(n_steps-1):]
+                del model.rewards[:]
+                del model.saved_actions[:]
+            
+            state = next_state
+
+        # update cumulative reward
+        running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
+
+        # update learning rate         
+        scheduler.step()
+
+        # log results
+        if i_episode % log_interval == 0:
+            print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
+                  i_episode, ep_reward, running_reward, scheduler.get_lr()[0]))
+            # wandb.log({'Episode Reward': ep_reward, 'Average Reward': running_reward, 'Learning Rate': scheduler.get_lr()[0]})
+
+    return running_reward
+       
+
+if __name__ == '__main__':
+        # Training settings
     parser = argparse.ArgumentParser(description='PyTorch actor-critic example')
     parser.add_argument('--gamma', type=float, default=0.85, metavar='G',
                         help='discount factor (default: 0.99)')
@@ -172,73 +228,17 @@ def main():
     parser.add_argument('--normalize_returns', type=bool, default=True, help='normalise returns')
     args = parser.parse_args()
 
-    
-    running_reward = 10
+
     num_episodes = 1000
     observation_type = 'pixel'
 
     wandb.init(mode='disabled')
-    # wandb.init(project=args.wandb_project, config=args)
+    # wandb.init(project=wandb_project, config=args)
 
     # set up environment
     env = Catch(rows=7, columns=7, speed=1.0, max_steps=250,
             max_misses=10, observation_type=observation_type, seed=None)
 
+    ACtrain(env, args.gamma, args.entropy_weight, args.baseline, args.entropy_regularization, args.normalize_returns, args.bootstrap, args.render, args.log_interval, args.n_steps, num_episodes=1000)
 
-    # run infinitely many episodes
-    for i_episode in range(num_episodes):
-
-        # reset environment and episode reward
-        state = env.reset()
-        ep_reward = 0
-
-        done = False
-        while not done and i_episode <= num_episodes:
-
-            # select action from policy
-            action = select_action(state)
-
-            # take the action
-            next_state, reward, done, _ = env.step(action)
-
-            if args.render:
-                env.render()
-
-            model.rewards.append(reward)
-            ep_reward += reward
-
-            if done and not args.bootstrap:
-                update(args.gamma, args.entropy_weight, args.baseline, args.entropy_regularization, args.normalize_returns, args.bootstrap, bootstrap_state=None, done=True)
-
-            elif args.bootstrap and len(model.rewards) >= args.n_steps:
-                
-                # update the policy after every n steps
-                bootstrap_state = torch.FloatTensor(next_state).unsqueeze(0)
-                update(args.gamma, args.entropy_weight, args.baseline, args.entropy_regularization, args.normalize_returns, args.bootstrap, bootstrap_state=bootstrap_state, done=False)
-                
-                # reset the rewards and action buffer to have only the last n steps
-                # model.rewards = model.rewards[-(n_steps-1):]
-                # model.saved_actions = model.saved_actions[-(n_steps-1):]
-                del model.rewards[:]
-                del model.saved_actions[:]
-            
-            state = next_state
-
-        # update cumulative reward
-        running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
-
-        # update learning rate         
-        scheduler.step()
-
-        # log results
-        if i_episode % args.log_interval == 0:
-            print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
-                  i_episode, ep_reward, running_reward, scheduler.get_lr()[0]))
-            wandb.log({'Episode Reward': ep_reward, 'Average Reward': running_reward, 'Learning Rate': scheduler.get_lr()[0]})
-
-       
     wandb.finish()
-
-if __name__ == '__main__':
-    main()
-
