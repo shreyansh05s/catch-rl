@@ -46,12 +46,14 @@ class Policy_network(nn.Module):
 
 # Define the REINFORCE agent
 class REINFORCEAgent:
-    def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99):
+    def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99,entropy_reg = True, beta = 0.001):
         self.policy = Policy_network(input_size,hidden_size, output_size).to(device) # Create the policy network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr) # Create the optimizer
         self.gamma = gamma
         self.saved_log_probs = []
         self.rewards = []
+        self.entropy_reg = entropy_reg
+        self.beta = beta
         
     def select_action(self, state):
         state = torch.from_numpy(state).float().to(device).unsqueeze(0)   # Convert the state to a tensor
@@ -63,7 +65,8 @@ class REINFORCEAgent:
     
     def update_policy(self):
         R = 0 
-        policy_loss = []  
+        policy_loss = [] 
+        entropy_loss = [] 
         returns = []
         # loop through the rewards in reverse order
         for r in self.rewards[::-1]: 
@@ -75,14 +78,20 @@ class REINFORCEAgent:
         # loop through the saved log probabilities and the returns
         for log_prob, R in zip(self.saved_log_probs, returns):
             policy_loss.append(-log_prob * R) # Calculate the policy loss
+            entropy_loss.append(-(torch.exp(log_prob) * log_prob)) # Calculate the entropy loss
         self.optimizer.zero_grad() # Reset the gradients 
         policy_loss = torch.cat(policy_loss).to(device).sum() # Calculate the sum of the policy loss
-        policy_loss.backward() # Calculate the gradients
+        entropy_loss = torch.cat(entropy_loss).to(device).sum() # Calculate the sum of the entropy loss
+        if self.entropy_reg: # If entropy regularization is used
+            loss = policy_loss + self.beta * entropy_loss # Calculate the loss
+        else:
+            loss = policy_loss
+        loss.backward() # Calculate the gradients
         self.optimizer.step() # Update the policy network
         self.saved_log_probs = [] # Reset the saved log probabilities
         self.rewards = [] # Reset the rewards
 
-        wandb.log({'policy_loss': policy_loss.item()})
+        wandb.log({'policy_loss': policy_loss.item(), 'entropy_loss': entropy_loss.item(), 'loss': loss.item()})
     
     # Get the action with the highest probability from the policy network during testing
     def get_action(self, state):
@@ -120,22 +129,31 @@ def train(env, agent, num_episodes=1000, max_steps=250, print_interval=100):
     return total_rewards
 
 if __name__ == '__main__':    
-    parser = argparse.ArgumentParser(description='Train an Actor-Critic RL agent for the Catch environment')
-    parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-    parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
+    parser = argparse.ArgumentParser(description='Train an Reinforce agent for the Catch environment')
+    parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
+    parser.add_argument('--gamma', type=float, default=0.9, help='discount factor')
     parser.add_argument('--hidden_size', type=int, default=128, help='size of the hidden layer')
-    parser.add_argument('--num_episodes', type=int, default=5000, help='number of episodes to train')
-    parser.add_argument('--wandb_project', type=str, default='catch-rl', help='Wandb project name')
+    parser.add_argument('--num_episodes', type=int, default=2000, help='number of episodes to train')
+    parser.add_argument('--beta', type=int, default=0.001, help='the strength of the entropy regularization term in the loss.')
+    parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
+    parser.add_argument('--wandb_project', type=str, default='Reinforce', help='Wandb project name')
     args = parser.parse_args()
 
+    
 
     # comment out to enable wandb logging
-    wandb.init(mode='disabled')
+    #wandb.init(mode='disabled')
      
 
     # Initialize Wandb logging inside team project "leiden-rl"
     # add team
-    # wandb.init(project=args.wandb_project, config=args)    
+    wandb.init(project=args.wandb_project, config=args)    
+
+    # Set boolean parameter
+    wandb.config.entropy_reg = False
+
+    # Log the hyperparameter values
+    wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
 
     # Create an instance of the customizable Catch environment
     env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='pixel', seed=None)
@@ -154,7 +172,10 @@ if __name__ == '__main__':
     print_interval = 100
     total_rewards = train(env, agent,args.num_episodes, max_steps, print_interval)
 
-    wandb.finish()
+    
 
-    print("Average reward: {}".format(np.mean(total_rewards)))
+    print("Average rewards: {}".format(np.mean(total_rewards)))
+
+    wandb.log({'Average rewards': np.mean(total_rewards)})
+    wandb.finish()
 
