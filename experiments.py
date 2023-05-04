@@ -48,8 +48,11 @@ default_env = {
 number_of_repeats = 10
 
 
-def run_experiment(experiment):
+def run_experiment(experiment, job_type=None):
     # run each experiment 10 times
+    if job_type is not None:
+        experiment = [exp for exp in experiment if exp["job_type"] == job_type]
+    
     for exp in experiment:
         # run each experiment 10 times
         exp["model"] = models[exp["model"]]
@@ -83,9 +86,9 @@ def run_experiment(experiment):
 
 if __name__ == "__main__":
     run_all = False
-    
+    job_type = None
     ############
-    # maybe add group as an argument to run_experiment 
+    # maybe add job_type as an argument to run_experiment 
     # and then run_experiment will run all experiments just in that group
     # also add team name as an argument to run_experiment
     ############
@@ -94,6 +97,8 @@ if __name__ == "__main__":
         description='Experiments for Catch environment')
     parser.add_argument('--experiment', type=str, default=None, metavar='N',
                         help='experiment to run (default: would run all experiments)')
+    parser.add_argument('--job_type', type=str, default=None, metavar='N',
+                        help='job type to run (default: would run all jobs)')
     args = parser.parse_args()
 
     if args.experiment is None:
@@ -112,4 +117,4 @@ if __name__ == "__main__":
 
     else:
         print("Running experiment: {}".format(args.experiment))
-        run_experiment(experiments[args.experiment])
+        run_experiment(experiments[args.experiment], args.job_type)
