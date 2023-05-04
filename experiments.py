@@ -34,6 +34,7 @@ global_exp_params = {
     "log_interval": 10,
     "experiment": True,
     "verbose": False,
+    "wandb": True
 }
 
 default_env = {
@@ -72,8 +73,14 @@ def run_experiment(experiment, job_type=None):
         # convert dict to argparse object
         args = argparse.Namespace(**exp)
 
-        if args.env == "default":
-            env = agent.create_env(**default_env)
+
+        env_params = deepcopy(default_env)
+
+        # update only the parameters that are present in the default env
+        env_params.update({k: v for k, v in exp.items() if k in default_env})
+        
+        # create environment
+        env = agent.create_env(**env_params)
 
         # calculate the optimal reward possible for the environment
         # optimal_reward = args.max_steps / (env.columns-1)
@@ -88,8 +95,6 @@ if __name__ == "__main__":
     run_all = False
     job_type = None
     ############
-    # maybe add job_type as an argument to run_experiment 
-    # and then run_experiment will run all experiments just in that group
     # also add team name as an argument to run_experiment
     ############
     

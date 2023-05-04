@@ -12,25 +12,37 @@ from catch import Catch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# env.reset(seed=seed)
-# torch.manual_seed(seed)
+model = None
+optimizer = None
+scheduler = None
+
+# utilized for normalizing the returns
+eps = np.finfo(np.float32).eps.item()
 
 # create a tuple to store the information about our transitions
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value', 'entropy'])
 
 
-class Policy(nn.Module):
+class ActorCritic(nn.Module):
     """
     implements both actor and critic in one model
     """
 
-    def __init__(self, input_size=7, hidden_size1=16, hidden_size2=32, hidden_size3=128, actor_output=3, critic_output=1):
-        super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(input_size, hidden_size1,
-                               kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(hidden_size1, hidden_size2,
-                               kernel_size=3, padding=1)
-        self.fc1 = nn.Linear(hidden_size2 * input_size * 2, hidden_size3)
+    def __init__(self, input_size=7, hidden_size1=16, hidden_size2=32, hidden_size3=128, actor_output=3, critic_output=1, observation_type="pixel"):
+        super(ActorCritic, self).__init__()
+
+        self.observation_type = observation_type
+
+        if self.observation_type == "pixel":
+            self.conv1 = nn.Conv2d(
+                input_size, hidden_size1, kernel_size=3, padding=1)
+            self.conv2 = nn.Conv2d(
+                hidden_size1, hidden_size2, kernel_size=3, padding=1)
+            self.fc1 = nn.Linear(hidden_size2 * input_size * 2, hidden_size3)
+        elif self.observation_type == "vector":
+            self.fc1 = nn.Linear(input_size, hidden_size2)
+            self.fc2 = nn.Linear(hidden_size2, hidden_size2)
+            self.fc3 = nn.Linear(hidden_size2, hidden_size3)
 
         # actor's layer
         self.action_head = nn.Linear(hidden_size3, actor_output)
@@ -46,29 +58,28 @@ class Policy(nn.Module):
         """
         forward of both actor and critic
         """
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = x.reshape(x.size(0), -1)  # Flatten the tensor
-        x = torch.relu(self.fc1(x))
+        if self.observation_type == "pixel":
+            x = F.relu(self.conv1(x))
+            x = F.relu(self.conv2(x))
+            x = x.reshape(x.size(0), -1)  # Flatten the tensor
+            x = torch.relu(self.fc1(x))
 
-        # actor: choses action to take from state s_t by returning probability of each action
+        elif self.observation_type == "vector":
+            x = torch.relu(self.fc1(x))
+            x = torch.relu(self.fc2(x))
+            x = torch.relu(self.fc3(x))
+
+        # actor
         action_prob = F.softmax(self.action_head(x), dim=-1)
 
-        # critic: evaluates being in the state s_t
+        # critic
         state_values = self.value_head(x)
 
         return action_prob, state_values
 
 
-model = None
-optimizer = None
-scheduler = None
-# scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-eps = np.finfo(np.float32).eps.item()
-
-
 def select_action(state):
-    state = torch.FloatTensor(state).unsqueeze(0)
+    # state = torch.FloatTensor(state).unsqueeze(0)
     probs, state_value = model(state)
 
     # create a categorical distribution over the list of probabilities of actions
@@ -85,7 +96,7 @@ def select_action(state):
     return action.item()
 
 
-def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, normalize_returns=True, bootstrap=False, bootstrap_state=None, done=False):
+def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, normalize_returns=True, bootstrap=False, bootstrap_state=None, done=True):
     """
     Training code. Calculates actor and critic loss and performs backprop.
     """
@@ -103,7 +114,7 @@ def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, 
         R = r + gamma * R
         returns.insert(0, R)
 
-    returns = torch.tensor(returns)
+    returns = torch.tensor(returns).to(device)
 
     # normalize the returns to stabilize training
     if normalize_returns:
@@ -126,7 +137,7 @@ def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, 
         policy_losses.append(-log_prob * advantage)
 
         # calculate value loss
-        value_losses.append(F.mse_loss(value, torch.tensor([R])))
+        value_losses.append(F.mse_loss(value, torch.tensor([R]).to(device)))
 
     # reset gradients
     optimizer.zero_grad()
@@ -144,36 +155,57 @@ def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, 
 
 
 def train(env, args):
-    if args.experiment:
+    if args.experiment and args.wandb:
         wandb.init(project=args.wandb_project, config=args,
                    group=args.group, job_type=args.job_type)
         # add optimal reward as a reference to wandb graphs
         # wandb.run.tags = [f"Optimal Reward: {args.optimal_reward}"]
-    
+
     global model, optimizer, scheduler
-    
-    model = Policy(input_size=7, hidden_size1=16, hidden_size2=32,
-               hidden_size3=128, actor_output=3, critic_output=1)
+
+    # make input_size take value from the environment
+    hidden_size = 16
+
+    if args.observation_type == "vector":
+        input_size = env.observation_space.shape[0]
+
+    elif args.observation_type == "pixel":
+        if env.observation_space.shape[0] != env.observation_space.shape[1]:
+            # test if this works for conv2d
+            # maybe add padding to make it square
+            input_size = env.observation_space.shape[0]
+        else:
+            input_size = env.observation_space.shape[0]
+
+    # and make hidden_size a variable parameter based on the input_size
+    model = ActorCritic(input_size=input_size, hidden_size1=hidden_size, hidden_size2=32, hidden_size3=128,
+                        actor_output=3, critic_output=1, observation_type=args.observation_type).to(device)
+
+    # initialize optimizer
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+
+    # initialize scheduler
     if args.lr_scheduler:
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_decay)
+        scheduler = optim.lr_scheduler.StepLR(
+            optimizer, step_size=args.lr_step_size, gamma=args.lr_decay)
 
     running_reward = 10
     # run infinitely many episodes
     for i_episode in range(args.num_episodes):
 
         # reset environment and episode reward
-        state = env.reset()
+        state = torch.FloatTensor(env.reset()).unsqueeze(0).to(device)
         ep_reward = 0
 
         done = False
-        while not done and i_episode <= args.num_episodes:
+        while not done:
 
             # select action from policy
             action = select_action(state)
 
             # take the action
             next_state, reward, done, _ = env.step(action)
+            next_state = torch.FloatTensor(next_state).unsqueeze(0).to(device)
 
             if args.render:
                 env.render()
@@ -183,12 +215,12 @@ def train(env, args):
 
             if done and not args.bootstrap:
                 update(args.gamma, args.entropy_weight, args.baseline, args.entropy_regularization,
-                       args.normalize_returns, args.bootstrap, bootstrap_state=None, done=True)
+                       args.normalize_returns, args.bootstrap)
 
             elif args.bootstrap and len(model.rewards) >= args.n_steps:
 
                 # update the policy after every n steps
-                bootstrap_state = torch.FloatTensor(next_state).unsqueeze(0)
+                bootstrap_state = next_state
                 update(args.gamma, args.entropy_weight, args.baseline, args.entropy_regularization,
                        args.normalize_returns, args.bootstrap, bootstrap_state=bootstrap_state, done=done)
 
@@ -205,15 +237,19 @@ def train(env, args):
         if args.lr_scheduler:
             scheduler.step()
 
-        # log results
+        # log results on console
         if i_episode % args.log_interval == 0 and args.verbose:
             print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}, lr: {:.5f}'.format(
                   i_episode, ep_reward, running_reward, scheduler.get_lr()[0]))
 
-        wandb.log({'total_reward': ep_reward,
-                  'avg_reward': running_reward, 'lr': scheduler.get_lr()[0]})
-    if args.experiment:
+        # log results on wandb
+        if args.wandb:
+            wandb.log({'total_reward': ep_reward,
+                       'avg_reward': running_reward, 'lr': scheduler.get_lr()[0]})
+
+    if args.experiment and args.wandb:
         wandb.finish()
+
     return running_reward
 
 
@@ -258,22 +294,39 @@ if __name__ == '__main__':
                         default='pixel', help='pixel or vector')
     parser.add_argument('--num_episodes', type=int,
                         default=1000, help='number of episodes to train')
-    parser.add_argument('--experiment', type=bool, default=False, help='run experiment')
-    parser.add_argument('--lr_decay', type=float, default=0.99, help='learning rate decay')
-    parser.add_argument('--lr_step_size', type=int, default=50, help='learning rate step size')
-    parser.add_argument('--job_type', type=str, default='train', help='job type')
-    parser.add_argument('--lr_scheduler', type=bool, default=True, help='use learning rate schedule')
+    parser.add_argument('--experiment', type=bool,
+                        default=False, help='run experiment')
+    parser.add_argument('--lr_decay', type=float,
+                        default=0.99, help='learning rate decay')
+    parser.add_argument('--lr_step_size', type=int,
+                        default=50, help='learning rate step size')
+    parser.add_argument('--job_type', type=str,
+                        default='train', help='job type')
+    parser.add_argument('--lr_scheduler', type=bool,
+                        default=True, help='use learning rate schedule')
+    parser.add_argument('--wandb', type=bool, default=True, help='use wandb')
+    parser.add_argument('--env_rows', type=int, default=7, help='env rows')
+    parser.add_argument('--env_columns', type=int,
+                        default=7, help='env columns')
+    parser.add_argument('--env_speed', type=float,
+                        default=1.0, help='env speed')
+    parser.add_argument('--env_max_steps', type=int,
+                        default=250, help='env max steps')
+    parser.add_argument('--env_max_misses', type=int,
+                        default=10, help='env max misses')
     args = parser.parse_args()
 
-    num_episodes = args.num_episodes
-    observation_type = args.observation_type
-
-    wandb.init(project=args.wandb_project, config=args,
-               group=args.group, job_type=args.job_type)
+    # initialize wandb for logging
+    if args.wandb:
+        wandb.init(project=args.wandb_project, config=args,
+                   group=args.group, job_type=args.job_type)
 
     # set up environment
-    env = create_env()
+    env = create_env(rows=args.env_rows, columns=args.env_columns, speed=args.env_speed,
+                     max_steps=args.env_max_steps, max_misses=args.env_max_misses, observation_type=args.observation_type)
 
+    # run training
     train(env, args)
 
-    wandb.finish()
+    if args.wandb:
+        wandb.finish()

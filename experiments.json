@@ -136,14 +136,14 @@
     "ObservationType": [
         {
             "group": "ObservationType",
-            "job_type": "A2C-ObservationType-pixel",
+            "job_type": "A2C-pixel",
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default"
         },
         {
             "group": "ObservationType",
-            "job_type": "A2C-ObservationType-vector",
+            "job_type": "A2C-vector",
             "model": "ActorCritic",
             "observation_type": "vector",
             "env": "default"
