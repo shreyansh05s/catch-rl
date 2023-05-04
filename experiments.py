@@ -22,7 +22,8 @@ hyperparameter_defaults = {
     "baseline": False,
     "normalize_returns": True,
     "lr_decay": 0.99,
-    "lr_step_size": 50
+    "lr_step_size": 50,
+    "lr_scheduler": True
 }
 
 # define different experiments in a list
@@ -82,6 +83,12 @@ def run_experiment(experiment):
 
 if __name__ == "__main__":
     run_all = False
+    
+    ############
+    # maybe add group as an argument to run_experiment 
+    # and then run_experiment will run all experiments just in that group
+    # also add team name as an argument to run_experiment
+    ############
     
     parser = argparse.ArgumentParser(
         description='Experiments for Catch environment')

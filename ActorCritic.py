@@ -155,7 +155,8 @@ def train(env, args):
     model = Policy(input_size=7, hidden_size1=16, hidden_size2=32,
                hidden_size3=128, actor_output=3, critic_output=1)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_decay)
+    if args.lr_scheduler:
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_step_size, gamma=args.lr_decay)
 
     running_reward = 10
     # run infinitely many episodes
@@ -201,7 +202,8 @@ def train(env, args):
         running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
 
         # update learning rate
-        scheduler.step()
+        if args.lr_scheduler:
+            scheduler.step()
 
         # log results
         if i_episode % args.log_interval == 0 and args.verbose:
@@ -260,6 +262,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay', type=float, default=0.99, help='learning rate decay')
     parser.add_argument('--lr_step_size', type=int, default=50, help='learning rate step size')
     parser.add_argument('--job_type', type=str, default='train', help='job type')
+    parser.add_argument('--lr_scheduler', type=bool, default=True, help='use learning rate schedule')
     args = parser.parse_args()
 
     num_episodes = args.num_episodes
