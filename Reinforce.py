@@ -110,17 +110,17 @@ class Reinforce:
         # if args.wandb:
         #     wandb.log({'policy_loss': policy_loss.item(), 'entropy_loss': entropy_loss.item(), 'loss': loss.item()})
     
-    # Get the action with the highest probability from the policy network during testing
-    def get_action(self, state):
-        state = torch.from_numpy(state).float().to(device).unsqueeze(0)
-        action_probs = torch.softmax(self.policy(state), dim=1).to(device)
-        action = action_probs.argmax(dim=1).to(device)
-        return action.item()
+    # # Get the action with the highest probability from the policy network during testing
+    # def get_action(self, state):
+    #     state = torch.from_numpy(state).float().to(device).unsqueeze(0)
+    #     action_probs = torch.softmax(self.policy(state), dim=1).to(device)
+    #     action = action_probs.argmax(dim=1).to(device)
+    #     return action.item()
 
     
 # Define the REINFORCE training function
 def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interval=100):
-    if args.experiment and args.wandb:
+    if args.wandb:
         wandb.init(project=args.wandb_project, config=args, group=args.group, job_type=args.job_type)
 
      # print("observation type: ", args.observation_type)
@@ -133,6 +133,7 @@ def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interva
 
     output_size = env.action_space.n
 
+    
     agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta,args.observation_type,args.lr_step_size,args.lr_decay,args.lr_scheduler)
 
 
@@ -192,7 +193,6 @@ if __name__ == '__main__':
     parser.add_argument('--rows', type=int, default=7, help='Number of rows in the game')
     parser.add_argument('--group', type=str, default='test',  help='Wandb group name')
     parser.add_argument('--job_type', type=str,default='train', help='job type')
-    parser.add_argument('--experiment', type=bool, default=True, help='run experiment')
     parser.add_argument('--lr_scheduler', type=bool, default=True, help='use learning rate scheduler')
     parser.add_argument('--lr_decay', type=float, default=0.99, help='learning rate decay')
     parser.add_argument('--lr_step_size', type=int, default=50, help='learning rate decay step')
