@@ -246,10 +246,10 @@ def train(env, args):
         if args.wandb:
             if args.lr_scheduler:
                 wandb.log({'total_reward': ep_reward,
-                           'avg_reward': running_reward, 'lr': args.lr})
+                           'avg_reward': running_reward, 'lr': scheduler.get_lr()[0]})
             else:
                 wandb.log({'total_reward': ep_reward,
-                           'avg_reward': running_reward, 'lr': scheduler.get_lr()[0]})
+                           'avg_reward': running_reward, 'lr': args.lr})
 
     if args.experiment and args.wandb:
         wandb.finish()
