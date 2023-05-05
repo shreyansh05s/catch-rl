@@ -49,7 +49,7 @@ default_env = {
 number_of_repeats = 10
 
 
-def run_experiment(experiment, job_type=None):
+def run_experiment(experiment, job_type=None, number_of_repeats=number_of_repeats):
     # run each experiment 10 times
     if job_type is not None:
         experiment = [exp for exp in experiment if exp["job_type"] == job_type]
@@ -104,6 +104,8 @@ if __name__ == "__main__":
                         help='experiment to run (default: would run all experiments)')
     parser.add_argument('--job_type', type=str, default=None, metavar='N',
                         help='job type to run (default: would run all jobs)')
+    parser.add_argument('--num_of_repeats', type=int, default=10, metavar='N',
+                        help='number of times to repeat each experiment (default: 10)')
     args = parser.parse_args()
 
     if args.experiment is None:
@@ -118,8 +120,8 @@ if __name__ == "__main__":
         for key, experiment in experiments.items():
             print("Running experiment: {}".format(key))
             # print(experiment)
-            run_experiment(experiment)
+            run_experiment(experiment, args.num_of_repeats)
 
     else:
         print("Running experiment: {}".format(args.experiment))
-        run_experiment(experiments[args.experiment], args.job_type)
+        run_experiment(experiments[args.experiment], args.job_type, args.num_of_repeats)
