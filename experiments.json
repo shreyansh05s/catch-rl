@@ -122,13 +122,12 @@
         },
         {
             "group": "Entropy",
-            "job_type": "A2C-entropy-0",
+            "job_type": "A2C",
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
             "hyperparameter": {
-                "entropy_weight": 0,
-                "entropy_regularization": true
+                "entropy_regularization": false
             }
         },
         {
@@ -144,6 +143,17 @@
         }
     ],
     "LearningRate": [
+        {
+            "group": "LearningRate",
+            "job_type": "A2C-lr-1e-2",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "lr": 1e-2,
+                "lr_scheduler": false
+            }
+        },
         {
             "group": "LearningRate",
             "job_type": "A2C-lr-1e-3",
@@ -188,7 +198,6 @@
                 "lr_scheduler": true
             }
         }
-
     ],
     "LearningRate_Reinforce": [
         {
@@ -259,7 +268,6 @@
                 "lr_scheduler": false
             }
         }
-
     ],
     "ObservationType": [
         {
