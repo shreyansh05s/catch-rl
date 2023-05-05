@@ -161,8 +161,11 @@ def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interva
             #Log the episode reward, loss ,TD error, and learning rate
             wandb.log({'total_reward': total_reward })
 
+        if args.wandb:
+            wandb.log({'Average rewards': np.mean(total_rewards)})
+            wandb.log({'Max rewards': np.max(total_rewards)})
+            
     if args.wandb:
-        wandb.log({'Average rewards': np.mean(total_rewards)})
         wandb.finish()
         
     return total_rewards

@@ -55,7 +55,25 @@
                 "entropy_reg": true,
                 "max_steps": 250
             }
+        },
+        {
+            "group": "Baseline",
+            "job_type": "Reinforce-baseline2",
+            "model": "Reinforce",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "lr": 0.001,
+                "gamma": 0.7,
+                "hidden_size": 128,
+                "num_episodes": 1000,
+                "beta": 0.01,
+                "entropy_reg": true,
+                "max_steps": 250,
+                "lr_scheduler": false
+            }
         }
+
     ],
     "Entropy": [
         {
