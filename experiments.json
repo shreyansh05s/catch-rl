@@ -48,7 +48,7 @@
             "env": "default",
             "hyperparameter": {
                 "lr": 0.001,
-                "gamma": 0.7,
+                "gamma": 0.85,
                 "hidden_size": 128,
                 "num_episodes": 1000,
                 "beta": 0.01,

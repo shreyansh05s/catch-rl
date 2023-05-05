@@ -29,7 +29,7 @@ class Policy_network(nn.Module):
 class Conv_network(nn.Module):
     def __init__(self, input_channels, hidden_size, output_size):
         super(Conv_network, self).__init__()
-        #create convolutional layers with  input[1, 7, 7, 2]
+        # Define the convolutional layers
         self.conv1 = nn.Conv2d(input_channels, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.fc1 = nn.Linear(32 * 7 * 2, hidden_size)
@@ -48,18 +48,19 @@ class Reinforce:
     def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99,entropy_reg = True, beta = 0.001,observation_type = 'pixel',lr_step_size = 50, lr_decay = 0.99, lr_scheduler = True ):
         #check if the observation is pixel or vector and select the appropriate network
         if observation_type == 'pixel':
-            print('pixel')
+            print('Observation type is pixel')
             self.policy = Conv_network(input_size,hidden_size, output_size).to(device)
         elif observation_type == 'vector':
-            print('vector')
+            print('Observation type is vector')
             self.policy = Policy_network(input_size,hidden_size, output_size).to(device)
 
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr) # Create the optimizer
 
-        # initialize scheduler
-        if args.lr_scheduler:
+        #check if the learning rate scheduler is enabled
+        if lr_scheduler:
+            # Create the learning rate scheduler
             self.scheduler = optim.lr_scheduler.StepLR(
-                optimizer, step_size=args.lr_step_size, gamma=args.lr_decay)
+                self.optimizer, step_size=lr_step_size, gamma=lr_decay)
 
         self.gamma = gamma
         self.saved_log_probs = []
@@ -95,7 +96,7 @@ class Reinforce:
         self.optimizer.zero_grad() # Reset the gradients 
         policy_loss = torch.cat(policy_loss).to(device).sum() # Calculate the sum of the policy loss
         entropy_loss = torch.cat(entropy_loss).to(device).sum() # Calculate the sum of the entropy loss
-        if self.entropy_reg: # If entropy regularization is used
+        if self.entropy_reg: # If entropy regularization is used 
             loss = policy_loss + self.beta * entropy_loss # Calculate the loss as a weighted sum
         else:
             loss = policy_loss
@@ -132,7 +133,7 @@ def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interva
 
     output_size = env.action_space.n
 
-    agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta,args.observation_type)
+    agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta,args.observation_type,args.lr_step_size,args.lr_decay,args.lr_scheduler)
 
 
     total_rewards = []
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     parser.add_argument('--beta', type=int, default=0.01, help='the strength of the entropy regularization term in the loss.')
     parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
     parser.add_argument('--wandb_project', type=str, default='catch-rl-experiments', help='Wandb project name')
-    parser.add_argument('--wandb', type=bool, default=True, help='Log experiment data to wandb')
+    parser.add_argument('--wandb', type=bool, default=False, help='Log experiment data to wandb')
     parser.add_argument('--observation_type', type=str, default='pixel', help='Observation type: vector or pixel')
     parser.add_argument('--seed', type=int, default=None, help='Random seed')
     parser.add_argument('--max_misses', type=int, default=10, help='Maximum number of misses before the episode ends')
@@ -192,8 +193,8 @@ if __name__ == '__main__':
     parser.add_argument('--job_type', type=str,default='train', help='job type')
     parser.add_argument('--experiment', type=bool, default=True, help='run experiment')
     parser.add_argument('--lr_scheduler', type=bool, default=True, help='use learning rate scheduler')
-    parser.add_argument('--lr_decay', type=float, default=0.9, help='learning rate decay')
-    parser.add_argument('--lr_decay_step', type=int, default=50, help='learning rate decay step')
+    parser.add_argument('--lr_decay', type=float, default=0.99, help='learning rate decay')
+    parser.add_argument('--lr_step_size', type=int, default=50, help='learning rate decay step')
     args = parser.parse_args()
 
     
@@ -208,9 +209,8 @@ if __name__ == '__main__':
      
 
     
-
     # Set boolean parameter
-    wandb.config.entropy_reg = False
+    #wandb.config.entropy_reg = False
 
     # Log the hyperparameter values
     #wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
