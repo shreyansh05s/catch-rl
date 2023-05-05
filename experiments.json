@@ -175,23 +175,22 @@
     "LearningRate_Reinforce": [
         {
             "group": "LearningRate",
-            "job_type": "A2C-lr-1e-3",
-            "model": "ActorCritic",
+            "job_type": "Reinforce-lr-scheduler",
+            "model": "Reinforce",
             "observation_type": "pixel",
             "env": "default",
             "hyperparameter": {
-                "lr": 1e-3,
-                "lr_scheduler": false
+                "lr_scheduler": true
             }
         },
         {
             "group": "LearningRate",
-            "job_type": "A2C-lr-1e-4",
-            "model": "ActorCritic",
+            "job_type": "Reinforce-lr",
+            "model": "Reinforce",
             "observation_type": "pixel",
             "env": "default",
             "hyperparameter": {
-                "lr": 1e-4,
+                "lr": 0.001,
                 "lr_scheduler": false
             }
         }

@@ -161,6 +161,7 @@ def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interva
             wandb.log({'total_reward': total_reward })
 
     if args.wandb:
+        wandb.log({'Average rewards': np.mean(total_rewards)})
         wandb.finish()
         
     return total_rewards
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_episodes', type=int, default=1000, help='number of episodes to train')
     parser.add_argument('--print_interval', type=int, default=100, help='interval between training status logs')
     parser.add_argument('--beta', type=int, default=0.01, help='the strength of the entropy regularization term in the loss.')
-    parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
+    parser.add_argument('--entropy_reg', type=bool, default=True, help='add entropy regularization')
     parser.add_argument('--wandb_project', type=str, default='catch-rl-experiments', help='Wandb project name')
     parser.add_argument('--wandb', type=bool, default=False, help='Log experiment data to wandb')
     parser.add_argument('--observation_type', type=str, default='pixel', help='Observation type: vector or pixel')
