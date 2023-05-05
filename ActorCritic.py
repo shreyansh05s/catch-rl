@@ -180,7 +180,10 @@ def train(env, args):
 
     # padding to be added to make the pixel observation square
     # in a scenario where the observation is not square
-    padding_required = env.observation_space.shape[0] != env.observation_space.shape[1]
+    if args.observation_type == "pixel":
+        padding_required = env.observation_space.shape[0] != env.observation_space.shape[1]
+    else:
+        padding_required = False
 
     # make input_size take value from the environment
     hidden_size = 16
