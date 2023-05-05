@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 from catch import Catch
+import math 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -153,6 +154,13 @@ def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, 
     del model.rewards[:]
     del model.saved_actions[:]
 
+def add_padding(state, padding):
+    
+    # assume input of shape 7X14X2
+    # we need to add padding to make it 14X14X2
+    # use torch.nn.functional.pad to add padding
+    
+    state = torch.nn.functional.pad(state, (padding, padding, padding, padding))
 
 def train(env, args):
     if args.experiment and args.wandb:
@@ -163,6 +171,10 @@ def train(env, args):
 
     global model, optimizer, scheduler
 
+    # padding to be added to make the pixel observation square
+    # in a scenario where the observation is not square
+    padding_required = False
+    
     # make input_size take value from the environment
     hidden_size = 16
 
@@ -170,10 +182,33 @@ def train(env, args):
         input_size = env.observation_space.shape[0]
 
     elif args.observation_type == "pixel":
-        if env.observation_space.shape[0] != env.observation_space.shape[1]:
+        if padding_required:
             # test if this works for conv2d
             # maybe add padding to make it square
-            input_size = env.observation_space.shape[0]
+            
+            # add padding to make it square
+            padding_required = True
+            
+            # input soze takes max of the two dimensions
+            if env.observation_space.shape[0] > env.observation_space.shape[1]:
+                pad = (env.observation_space.shape[0] - env.observation_space.shape[1]) / 2
+                # if pad.is_integer():
+                padding = {
+                    "index": 0,
+                    "pad": pad,
+                    # "right_pad": pad
+                }
+            else:
+                pad = (env.observation_space.shape[1] - env.observation_space.shape[0]) / 2
+                # if pad.is_integer():
+                padding = {
+                    "index": 1,
+                    "pad": pad,
+                    # "right_pad": pad
+                }
+                
+            input_size = max(env.observation_space.shape[0], env.observation_space.shape[1])
+            
         else:
             input_size = env.observation_space.shape[0]
 
@@ -229,6 +264,15 @@ def train(env, args):
                 del model.saved_actions[:]
 
             state = next_state
+            
+        if args.normalize_graph:          
+            # convert the reward to a value between -1 and 1
+            # with the min reward being args.min_reward and optimal reward being args.optimal_reward
+            if ep_reward < 0:
+                ep_reward = ep_reward / abs(args.min_reward)
+            else:
+                ep_reward = ep_reward / args.optimal_reward
+            
 
         # update cumulative reward
         running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
@@ -318,6 +362,8 @@ if __name__ == '__main__':
                         default=250, help='env max steps')
     parser.add_argument('--env_max_misses', type=int,
                         default=10, help='env max misses')
+    parser.add_argument('--normalize_graph', type=bool,
+                        default=False, help='normalize graph')
     args = parser.parse_args()
 
     # initialize wandb for logging

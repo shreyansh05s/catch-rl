@@ -4,6 +4,7 @@ import ActorCritic
 import argparse
 from copy import deepcopy
 import json
+import math
 
 # models
 models = {
@@ -34,7 +35,8 @@ global_exp_params = {
     "log_interval": 10,
     "experiment": True,
     "verbose": False,
-    "wandb": True
+    "wandb": True,
+    "normalize_graph": False
 }
 
 default_env = {
@@ -65,8 +67,8 @@ def run_experiment(experiment, job_type=None, number_of_repeats=10):
 
         del exp["model"]
 
-        # add global experiment parameters
-        exp.update(global_exp_params)
+        # add global experiment parameters which are not present in the hyperparameters
+        exp.update({k:v for k, v in global_exp_params.items() if k not in exp})
 
         # convert dict to argparse object
         args = argparse.Namespace(**exp)
@@ -79,10 +81,10 @@ def run_experiment(experiment, job_type=None, number_of_repeats=10):
         
         # create environment
         env = agent.create_env(**env_params)
-
-        # calculate the optimal reward possible for the environment
-        # optimal_reward = args.max_steps / (env.columns-1)
-        # args.optimal_reward = optimal_reward
+        
+        if args.normalize_graph:
+            args.optimal_reward = math.floor(env_params["max_steps"] / env_params["rows"])
+            args.min_reward = env_params["max_misses"]
 
         for i in range(number_of_repeats):
             agent.train(env, args)
