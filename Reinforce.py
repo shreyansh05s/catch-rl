@@ -9,27 +9,26 @@ import argparse
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 #Define the policy network
-# class Policy_network(nn.Module):
-#     def __init__(self, input_size,hidden_size, output_size):
-#         super(Policy_network, self).__init__()
-#         self.flatten = nn.Flatten()
-#         self.fc1 = nn.Linear(input_size, hidden_size)
-#         self.fc2 = nn.Linear(hidden_size, hidden_size)
-#         self.fc3 = nn.Linear(hidden_size, output_size)
-        
-       
-        
-#     def forward(self, x):
-#         x = self.flatten(x) # Flatten the input tensor
-#         x = torch.relu(self.fc1(x))
-#         x = torch.relu(self.fc2(x))
-#         x = self.fc3(x)
-#         return x
-
-# # Define the policy network
 class Policy_network(nn.Module):
-    def __init__(self, input_channels, hidden_size, output_size):
+    def __init__(self, input_size,hidden_size, output_size):
         super(Policy_network, self).__init__()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, output_size)
+           
+        
+    def forward(self, x):
+        x = self.flatten(x) # Flatten the input tensor
+        x = torch.relu(self.fc1(x))
+        x = torch.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+ # Define the policy network
+class Conv_network(nn.Module):
+    def __init__(self, input_channels, hidden_size, output_size):
+        super(Conv_network, self).__init__()
         #create convolutional layers with  input[1, 7, 7, 2]
         self.conv1 = nn.Conv2d(7, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
@@ -46,8 +45,15 @@ class Policy_network(nn.Module):
 
 # Define the REINFORCE agent
 class Reinforce:
-    def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99,entropy_reg = True, beta = 0.001):
-        self.policy = Policy_network(input_size,hidden_size, output_size).to(device) # Create the policy network
+    def __init__(self, input_size,hidden_size, output_size, lr=0.001, gamma=0.99,entropy_reg = True, beta = 0.001,observation_type = 'pixel'):
+        #check if the observation is pixel or vector and select the appropriate network
+        if observation_type == 'pixel':
+            print('pixel')
+            self.policy = Conv_network(input_size,hidden_size, output_size).to(device)
+        elif observation_type == 'vector':
+            print('vector')
+            self.policy = Policy_network(input_size,hidden_size, output_size).to(device)
+
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr) # Create the optimizer
         self.gamma = gamma
         self.saved_log_probs = []
@@ -134,9 +140,17 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.7, help='discount factor')
     parser.add_argument('--hidden_size', type=int, default=128, help='size of the hidden layer')
     parser.add_argument('--num_episodes', type=int, default=1000, help='number of episodes to train')
+    parser.add_argument('--print_interval', type=int, default=100, help='interval between training status logs')
     parser.add_argument('--beta', type=int, default=0.01, help='the strength of the entropy regularization term in the loss.')
     parser.add_argument('--entropy_reg', type=bool, default=False, help='add entropy regularization')
-    parser.add_argument('--wandb_project', type=str, default='Reinforce', help='Wandb project name')
+    parser.add_argument('--wandb_project', type=str, default='catch-rl-experiments', help='Wandb project name')
+    parser.add_argument('--observation_type', type=str, default='pixel', help='Observation type: vector or pixel')
+    parser.add_argument('--seed', type=int, default=None, help='Random seed')
+    parser.add_argument('--max_misses', type=int, default=10, help='Maximum number of misses before the episode ends')
+    parser.add_argument('--max_steps', type=int, default=250, help='Maximum number of steps before the episode ends')
+    parser.add_argument('--speed', type=float, default=1.0, help='Speed of the game')
+    parser.add_argument('--columns', type=int, default=7, help='Number of columns in the game')
+    parser.add_argument('--rows', type=int, default=7, help='Number of rows in the game')
     args = parser.parse_args()
 
     
@@ -156,21 +170,24 @@ if __name__ == '__main__':
     #wandb.log({'lr': args.lr, 'gamma': args.gamma, 'hidden_size': args.hidden_size, 'num_episodes': args.num_episodes, 'beta': args.beta, 'entropy_reg': args.entropy_reg})
 
     # Create an instance of the customizable Catch environment
-    env = Catch(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, observation_type='pixel', seed=None)
+    env = Catch(args.rows, args.columns, args.speed , args.max_steps , args.max_misses , args.observation_type, args.seed)
 
-    # Create an instance of the REINFORCE agent
-    input_size = env.observation_space.shape[0] * env.observation_space.shape[1] * env.observation_space.shape[2]
+    # print("observation type: ", args.observation_type)
+    if args.observation_type == 'pixel':
+        # Create an instance of the REINFORCE agent when observations are pixel images
+        input_size = env.observation_space.shape[0] * env.observation_space.shape[1] * env.observation_space.shape[2]
+    elif args.observation_type == 'vector':
+        # Create an instance of the REINFORCE agent when observations are vectors
+        input_size = env.observation_space.shape[0]
+
     output_size = env.action_space.n
-    # hidden_size = 128
 
 
-    agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta)
+
+    agent = Reinforce(input_size,args.hidden_size,output_size,args.lr,args.gamma,args.entropy_reg,args.beta,args.observation_type)
 
     # Train the agent
-    num_episodes = 1000
-    max_steps = 250
-    print_interval = 100
-    total_rewards = train(env, agent,args.num_episodes, max_steps, print_interval)
+    total_rewards = train(env, agent,args.num_episodes, args.max_steps, args.print_interval)
 
     
 
