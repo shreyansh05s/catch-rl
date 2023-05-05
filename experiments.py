@@ -47,7 +47,7 @@ default_env = {
 }
 
 
-def run_experiment(experiment, job_type=None, number_of_repeats=number_of_repeats):
+def run_experiment(experiment, job_type=None, number_of_repeats=10):
     # run each experiment 10 times
     if job_type is not None:
         experiment = [exp for exp in experiment if exp["job_type"] == job_type]
