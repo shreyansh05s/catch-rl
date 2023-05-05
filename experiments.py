@@ -16,7 +16,7 @@ models = {
 hyperparameter_defaults = {
     "lr": 1e-2,
     "gamma": 0.85,
-    "n_steps": 40,
+    "n_steps": 100,
     "entropy_weight": 0.01,
     "entropy_regularization": True,
     "bootstrap": False,

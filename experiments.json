@@ -15,7 +15,7 @@
             "env": "default",
             "hyperparameter": {
                 "bootstrap": true,
-                "n_steps": 40
+                "n_steps": 100
             }
         },
         {
@@ -37,7 +37,7 @@
             "hyperparameter": {
                 "baseline": true,
                 "bootstrap": true,
-                "n_steps": 40
+                "n_steps": 100
             }
         },
         {
