@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
 from catch import Catch
-import math 
+import math
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -154,13 +154,20 @@ def update(gamma, entropy_weight, baseline=False, entropy_regularization=False, 
     del model.rewards[:]
     del model.saved_actions[:]
 
-def add_padding(state, padding):
-    
-    # assume input of shape 7X14X2
-    # we need to add padding to make it 14X14X2
-    # use torch.nn.functional.pad to add padding
-    
-    state = torch.nn.functional.pad(state, (padding, padding, padding, padding))
+
+def add_padding(env, state):
+    padding = abs(
+        env.observation_space.shape[0] - env.observation_space.shape[1])
+
+    if env.observation_space.shape[0] > env.observation_space.shape[1]:
+        padding_tensor = torch.ones(
+            padding, env.observation_space.shape[0], 2) * -1
+        return torch.cat((state, padding_tensor.to(device)), dim=0)
+    else:
+        padding_tensor = torch.ones(
+            env.observation_space.shape[1], padding, 2) * -1
+        return torch.cat((state, padding_tensor.to(device)), dim=1)
+
 
 def train(env, args):
     if args.experiment and args.wandb:
@@ -173,44 +180,12 @@ def train(env, args):
 
     # padding to be added to make the pixel observation square
     # in a scenario where the observation is not square
-    padding_required = False
-    
+    padding_required = env.observation_space.shape[0] != env.observation_space.shape[1]
+
     # make input_size take value from the environment
     hidden_size = 16
 
-    if args.observation_type == "vector":
-        input_size = env.observation_space.shape[0]
-
-    elif args.observation_type == "pixel":
-        if padding_required:
-            # test if this works for conv2d
-            # maybe add padding to make it square
-            
-            # add padding to make it square
-            padding_required = True
-            
-            # input soze takes max of the two dimensions
-            if env.observation_space.shape[0] > env.observation_space.shape[1]:
-                pad = (env.observation_space.shape[0] - env.observation_space.shape[1]) / 2
-                # if pad.is_integer():
-                padding = {
-                    "index": 0,
-                    "pad": pad,
-                    # "right_pad": pad
-                }
-            else:
-                pad = (env.observation_space.shape[1] - env.observation_space.shape[0]) / 2
-                # if pad.is_integer():
-                padding = {
-                    "index": 1,
-                    "pad": pad,
-                    # "right_pad": pad
-                }
-                
-            input_size = max(env.observation_space.shape[0], env.observation_space.shape[1])
-            
-        else:
-            input_size = env.observation_space.shape[0]
+    input_size = env.observation_space.shape[0]
 
     # and make hidden_size a variable parameter based on the input_size
     model = ActorCritic(input_size=input_size, hidden_size1=hidden_size, hidden_size2=32, hidden_size3=128,
@@ -229,7 +204,12 @@ def train(env, args):
     for i_episode in range(args.num_episodes):
 
         # reset environment and episode reward
-        state = torch.FloatTensor(env.reset()).unsqueeze(0).to(device)
+        if padding_required:
+            state = add_padding(env, torch.FloatTensor(
+                env.reset())).unsqueeze(0).to(device)
+        else:
+            state = torch.FloatTensor(env.reset()).unsqueeze(0).to(device)
+
         ep_reward = 0
 
         done = False
@@ -240,7 +220,12 @@ def train(env, args):
 
             # take the action
             next_state, reward, done, _ = env.step(action)
-            next_state = torch.FloatTensor(next_state).unsqueeze(0).to(device)
+            if padding_required:
+                next_state = add_padding(env, torch.FloatTensor(
+                    next_state)).unsqueeze(0).to(device)
+            else:
+                next_state = torch.FloatTensor(
+                    next_state).unsqueeze(0).to(device)
 
             if args.render:
                 env.render()
@@ -264,15 +249,14 @@ def train(env, args):
                 del model.saved_actions[:]
 
             state = next_state
-            
-        if args.normalize_graph:          
+
+        if args.normalize_graph:
             # convert the reward to a value between -1 and 1
             # with the min reward being args.min_reward and optimal reward being args.optimal_reward
             if ep_reward < 0:
                 ep_reward = ep_reward / abs(args.min_reward)
             else:
                 ep_reward = ep_reward / args.optimal_reward
-            
 
         # update cumulative reward
         running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
@@ -337,7 +321,7 @@ if __name__ == '__main__':
     parser.add_argument('--group', type=str, default='test',
                         help='Wandb group name')
     parser.add_argument('--verbose', type=bool,
-                        default=False, help='print training info')
+                        default=True, help='print training info')
     parser.add_argument('--observation_type', type=str,
                         default='pixel', help='pixel or vector')
     parser.add_argument('--num_episodes', type=int,
@@ -352,7 +336,7 @@ if __name__ == '__main__':
                         default='train', help='job type')
     parser.add_argument('--lr_scheduler', type=bool,
                         default=True, help='use learning rate schedule')
-    parser.add_argument('--wandb', type=bool, default=True, help='use wandb')
+    parser.add_argument('--wandb', type=bool, default=False, help='use wandb')
     parser.add_argument('--env_rows', type=int, default=7, help='env rows')
     parser.add_argument('--env_columns', type=int,
                         default=7, help='env columns')
@@ -364,7 +348,12 @@ if __name__ == '__main__':
                         default=10, help='env max misses')
     parser.add_argument('--normalize_graph', type=bool,
                         default=False, help='normalize graph')
+    parser.add_argument('--cpu', type=bool,
+                        default=False, help='use cpu')
     args = parser.parse_args()
+
+    if args.cpu:
+        device = torch.device('cpu')
 
     # initialize wandb for logging
     if args.wandb:
