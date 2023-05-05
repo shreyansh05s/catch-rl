@@ -253,5 +253,62 @@
                 "env": "default4"
             }
         }
+    ],
+    "A2C-Bootstrap": [
+        {
+            "group": "A2C-Bootstrap",
+            "job_type": "A2C-Bootstrap-1",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 1
+            }
+        },
+        {
+            "group": "A2C-Bootstrap",
+            "job_type": "A2C-Bootstrap-10",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 10
+            }
+        },
+        {
+            "group": "A2c-Bootstrap",
+            "job_type": "A2C-Bootstrap-40",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 40
+            }
+        },
+        {
+            "group": "A2c-Bootstrap",
+            "job_type": "A2C-Bootstrap-100",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 100
+            }
+        },
+        {
+            "group": "A2c-Bootstrap",
+            "job_type": "A2C-Bootstrap-200",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "bootstrap": true,
+                "n_steps": 200
+            }
+        }
     ]
 }
