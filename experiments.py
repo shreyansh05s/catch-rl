@@ -46,8 +46,6 @@ default_env = {
     "observation_type": "pixel",
 }
 
-number_of_repeats = 10
-
 
 def run_experiment(experiment, job_type=None, number_of_repeats=number_of_repeats):
     # run each experiment 10 times

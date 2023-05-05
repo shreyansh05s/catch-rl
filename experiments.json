@@ -85,6 +85,17 @@
                 "entropy_weight": 0.7,
                 "entropy_regularization": true
             }
+        },
+        {
+            "group": "Entropy",
+            "job_type": "A2C-entropy-0",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "entropy_weight": 0,
+                "entropy_regularization": true
+            }
         }
     ],
     "LearningRate": [
@@ -146,7 +157,50 @@
             "job_type": "A2C-vector",
             "model": "ActorCritic",
             "observation_type": "vector",
+            "env_row": 14,
+            "env_columns": 7,
             "env": "default"
+        }
+    ],
+    "Env-size": [
+        {
+            "group": "Env-size",
+            "job_type": "A2C-Env-7X7",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "env_row": 7,	
+            "env_columns": 7
+        },
+        {
+            "group": "Environment",
+            "job_type": "A2C-Environment-2",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default2",
+            "hyperparameter": {
+                "env": "default2"
+            }
+        },
+        {
+            "group": "Environment",
+            "job_type": "A2C-Environment-3",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default3",
+            "hyperparameter": {
+                "env": "default3"
+            }
+        },
+        {
+            "group": "Environment",
+            "job_type": "A2C-Environment-4",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default4",
+            "hyperparameter": {
+                "env": "default4"
+            }
         }
     ]
 }
