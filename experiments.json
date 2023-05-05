@@ -339,7 +339,8 @@
             "observation_type": "pixel",
             "env": "default",
             "env_row": 7,	
-            "env_columns": 7
+            "env_columns": 7,
+            "normalize_graph": true
         },
         {
             "group": "Env-size",
@@ -348,35 +349,29 @@
             "observation_type": "pixel",
             "env": "default",
             "env_row": 10,	
-            "env_columns": 10
+            "env_columns": 10,
+            "normalize_graph": true
         },
         {
             "group": "Env-size",
-            "job_type": "A2C-Env-50X50",
+            "job_type": "A2C-Env-25X25",
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default3",
-            "env_row": 50,	
-            "env_columns": 50
+            "env_row": 25,	
+            "env_columns": 25,
+            "normalize_graph": true
         },
         {
             "group": "Env-size",
-            "job_type": "A2C-Env-100X100",
+            "job_type": "A2C-Env-14X7",
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default4",
-            "env_row": 100,	
-            "env_columns": 100
-        },
-        {
-            "group": "Env-size",
-            "job_type": "A2C-Env-7X14",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default4",
-            "env_row": 7,	
-            "env_columns": 14,
-            "env_speed": 0.5
+            "env_row": 14,	
+            "env_columns": 7,
+            "env_speed": 1.0,
+            "normalize_graph": true
         }
     ],
     "Env-speed": [

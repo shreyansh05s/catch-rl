@@ -116,10 +116,12 @@ if __name__ == "__main__":
     with open("experiments.json", "r") as f:
         experiments = json.load(f)
 
+    if "num_of_repeats" in experiment:
+        args.num_of_repeats = experiment["num_of_repeats"]
+    
     if run_all:
         for key, experiment in experiments.items():
             print("Running experiment: {}".format(key))
-            # print(experiment)
             run_experiment(experiment, args.num_of_repeats)
 
     else:
