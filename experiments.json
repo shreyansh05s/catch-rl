@@ -101,17 +101,6 @@
     "LearningRate": [
         {
             "group": "LearningRate",
-            "job_type": "A2C-lr-1e-2",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "hyperparameter": {
-                "lr": 1e-2,
-                "lr_scheduler": false
-            }
-        },
-        {
-            "group": "LearningRate",
             "job_type": "A2C-lr-1e-3",
             "model": "ActorCritic",
             "observation_type": "pixel",
@@ -139,10 +128,22 @@
             "observation_type": "pixel",
             "env": "default",
             "hyperparameter": {
-                "lr": 1e-4,
+                "lr": 1e-2,
+                "lr_scheduler": true
+            }
+        },
+        {
+            "group": "LearningRate",
+            "job_type": "A2C-lr-1e-3-lr_scheduler",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "lr": 1e-3,
                 "lr_scheduler": true
             }
         }
+
     ],
     "ObservationType": [
         {
@@ -157,8 +158,6 @@
             "job_type": "A2C-vector",
             "model": "ActorCritic",
             "observation_type": "vector",
-            "env_row": 14,
-            "env_columns": 7,
             "env": "default"
         }
     ],
