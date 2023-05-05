@@ -193,7 +193,7 @@
     "LearningRate_Reinforce": [
         {
             "group": "LearningRate_Reinforce",
-            "job_type": "Reinforce-lr-scheduler",
+            "job_type": "Reinforce-lr-1e-2-scheduler",
             "model": "Reinforce",
             "observation_type": "pixel",
             "env": "default",
@@ -204,6 +204,24 @@
                 "beta": 0.01,
                 "entropy_reg": true,
                 "max_steps": 250,
+                "lr": 0.01,
+                "lr_scheduler": true
+            }
+        },
+        {
+            "group": "LearningRate_Reinforce",
+            "job_type": "Reinforce-lr-1e-3-scheduler",
+            "model": "Reinforce",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "gamma": 0.85,
+                "hidden_size": 128,
+                "num_episodes": 1000,
+                "beta": 0.01,
+                "entropy_reg": true,
+                "max_steps": 250,
+                "lr": 0.001,
                 "lr_scheduler": true
             }
         },
@@ -215,23 +233,6 @@
             "env": "default",
             "hyperparameter": {
                 "lr": 0.001,
-                "gamma": 0.85,
-                "hidden_size": 128,
-                "num_episodes": 1000,
-                "beta": 0.01,
-                "entropy_reg": true,
-                "max_steps": 250,
-                "lr_scheduler": false
-            }
-        },
-        {
-            "group": "LearningRate_Reinforce",
-            "job_type": "Reinforce-lr-1e-2",
-            "model": "Reinforce",
-            "observation_type": "pixel",
-            "env": "default",
-            "hyperparameter": {
-                "lr": 0.01,
                 "gamma": 0.85,
                 "hidden_size": 128,
                 "num_episodes": 1000,
