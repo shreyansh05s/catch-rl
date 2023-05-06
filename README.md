@@ -115,3 +115,7 @@ python experiments.py --experiment <experiment_name> --job_type <job_type> --num
 
 All results are logged to [wandb](https://wandb.ai/). To view the results, go to the [wandb](https://wandb.ai/) website and login. Then, go to the project you want to view and select the group you want to view. You can then view the results of each experiment by selecting the corresponding group.
 
+We can see the image for an example of how to view different experiments on wandb in:
+```bash
+figures/wandb.png
+```
