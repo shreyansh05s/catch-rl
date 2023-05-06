@@ -86,7 +86,7 @@ def run_experiment(experiment, job_type=None, num_of_repeats=10):
 
         if args.normalize_graph:
             args.optimal_reward = math.floor(
-                env_params["max_steps"] / env_params["rows"])
+                (env_params["max_steps"] / env_params["rows"]) * env_params["speed"])
             args.min_reward = env_params["max_misses"]
 
         for i in range(num_of_repeats):

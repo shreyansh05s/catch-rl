@@ -475,7 +475,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "speed": 1.0
+            "speed": 1.0,
+            "normalize_graph": true
         },
         {
             "group": "Env-speed",
@@ -483,7 +484,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "speed": 0.5
+            "speed": 0.5,
+            "normalize_graph": true
         },
         {
             "group": "Env-speed",
@@ -491,7 +493,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "speed": 2.0
+            "speed": 2.0,
+            "normalize_graph": true
         },
         {
             "group": "Env-speed",
@@ -499,7 +502,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "speed": 5.0
+            "speed": 5.0,
+            "normalize_graph": true
         }
     ],
     "Env-variations": [
