@@ -421,8 +421,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_row": 7,	
-            "env_columns": 7,
+            "rows": 7,	
+            "columns": 7,
             "normalize_graph": true
         },
         {
@@ -431,8 +431,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_row": 10,	
-            "env_columns": 10,
+            "rows": 10,	
+            "columns": 10,
             "normalize_graph": true
         },
         {
@@ -441,8 +441,8 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default3",
-            "env_row": 25,	
-            "env_columns": 25,
+            "rows": 25,	
+            "columns": 25,
             "normalize_graph": true
         },
         {
@@ -451,9 +451,20 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default4",
-            "env_row": 14,	
-            "env_columns": 7,
-            "env_speed": 1.0,
+            "rows": 14,	
+            "columns": 7,
+            "speed": 1.0,
+            "normalize_graph": true
+        },
+        {
+            "group": "Env-size",
+            "job_type": "A2C-Env-7X14",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default4",
+            "rows": 7,	
+            "columns": 14,
+            "speed": 1.0,
             "normalize_graph": true
         }
     ],
@@ -464,7 +475,7 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_speed": 1.0
+            "speed": 1.0
         },
         {
             "group": "Env-speed",
@@ -472,7 +483,7 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_speed": 0.5
+            "speed": 0.5
         },
         {
             "group": "Env-speed",
@@ -480,7 +491,7 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_speed": 2.0
+            "speed": 2.0
         },
         {
             "group": "Env-speed",
@@ -488,25 +499,7 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_speed": 5.0
-        }
-    ],
-    "ObservationType_Speed": [
-        {
-            "group": "Env-observation_type-speed",
-            "job_type": "A2C-vector_0.5",
-            "model": "ActorCritic",
-            "observation_type": "vector",
-            "env": "default",
-            "env_speed": 0.5
-        },
-        {
-            "group": "Env-observation_type-speed",
-            "job_type": "A2C-vector_1.0",
-            "model": "ActorCritic",
-            "observation_type": "vector",
-            "env": "default",
-            "env_speed": 1.0
+            "speed": 5.0
         }
     ],
     "Env-variations": [
@@ -516,22 +509,21 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default",
-            "env_row": 14,	
-            "env_columns": 7,
-            "env_speed": 0.5,
+            "rows": 14,	
+            "columns": 7,
+            "speed": 0.5,
             "normalize_graph": true
         },
         {
             "group": "Env-variations",
-            "job_type": "Env-7X7-speed-1.5-vector",
+            "job_type": "Env-7X7-speed-0.5-vector",
             "model": "ActorCritic",
             "observation_type": "vector",
             "env": "default2",
-            "env_row": 7,	
-            "env_columns": 7,
-            "env_speed": 1.5,
-            "normalize_graph": true,
-            "num_of_repeats": 1
+            "rows": 7,	
+            "columns": 7,
+            "speed": 0.5,
+            "normalize_graph": true
         },
         {
             "group": "Env-variations",
@@ -539,88 +531,21 @@
             "model": "ActorCritic",
             "observation_type": "pixel",
             "env": "default3",
-            "env_row": 7,	
-            "env_columns": 7,
-            "env_max_misses": 20,
-            "env_max_steps": 300,
-            "normalize_graph": true,
-            "num_of_repeats": 1
-        }
-    ],
-    "NonSquareEnvs": [
-        {
-            "group": "NonSquareEnvs",
-            "job_type": "A2C-Env-10X5",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 10,	
-            "env_columns": 5,
+            "rows": 7,	
+            "columns": 7,
+            "max_misses": 20,
+            "max_steps": 300,
             "normalize_graph": true
         },
         {
-            "group": "NonSquareEnvs",
-            "job_type": "A2C-Env-5X20",
+            "group": "Env-variations",
+            "job_type": "Env-14X7-speed-0.5-vector",
             "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 5,	
-            "env_columns": 20,
-            "normalize_graph": true
-        },
-        {
-            "group": "NonSquareEnvs",
-            "job_type": "A2C-Env-5X10",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 5,	
-            "env_columns": 10,
-            "normalize_graph": true
-        },
-        {
-            "group": "NonSquareEnvs",
-            "job_type": "A2C-Env-5X50",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 5,	
-            "env_columns": 50,
-            "normalize_graph": true
-        }
-    ],
-    "NonSquareEnvs_Speed": [
-        {
-            "group": "NonSquareEnvs_Speed",
-            "job_type": "A2C-Env-10X5_0.5",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 10,	
-            "env_columns": 5,
-            "env_speed": 0.5,
-            "normalize_graph": true
-        },
-        {
-            "group": "NonSquareEnvs_Speed",
-            "job_type": "A2C-Env-10X5_1.0",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 10,	
-            "env_columns": 5,
-            "env_speed": 1.0,
-            "normalize_graph": true
-        },
-        { 
-            "group": "NonSquareEnvs_Speed",
-            "job_type": "A2C-Env-10X5_2.0",
-            "model": "ActorCritic",
-            "observation_type": "pixel",
-            "env": "default",
-            "env_row": 10,
-            "env_columns": 5,
-            "env_speed": 2.0,
+            "observation_type": "vector",
+            "env": "default2",
+            "rows": 14,	
+            "columns": 7,
+            "speed": 0.5,
             "normalize_graph": true
         }
     ]
