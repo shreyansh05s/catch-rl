@@ -425,5 +425,43 @@
             "env": "default",
             "env_speed": 1.0
         }
+    ],
+    "Env-variations": [
+        {
+            "group": "Env-variations",
+            "job_type": "Env-14X7-speed-0.5",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default",
+            "env_row": 14,	
+            "env_columns": 7,
+            "env_speed": 0.5,
+            "normalize_graph": true
+        },
+        {
+            "group": "Env-variations",
+            "job_type": "Env-7X7-speed-1.5-vector",
+            "model": "ActorCritic",
+            "observation_type": "vector",
+            "env": "default2",
+            "env_row": 7,	
+            "env_columns": 7,
+            "env_speed": 1.5,
+            "normalize_graph": true,
+            "num_of_repeats": 1
+        },
+        {
+            "group": "Env-variations",
+            "job_type": "max-misses-20-max-steps-300",
+            "model": "ActorCritic",
+            "observation_type": "pixel",
+            "env": "default3",
+            "env_row": 7,	
+            "env_columns": 7,
+            "env_max_misses": 20,
+            "env_max_steps": 300,
+            "normalize_graph": true,
+            "num_of_repeats": 1
+        }
     ]
 }
