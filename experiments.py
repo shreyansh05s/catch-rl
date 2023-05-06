@@ -115,7 +115,7 @@ if __name__ == "__main__":
         run_all = True
 
     # load experiments from json file
-    with open("remaining_experiments.json", "r") as f:
+    with open("experiments.json", "r") as f:
         experiments = json.load(f)
 
     if run_all:
