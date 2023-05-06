@@ -162,12 +162,13 @@ def add_padding(env, state):
     if env.observation_space.shape[0] > env.observation_space.shape[1]:
         padding_tensor = torch.ones(
             padding, env.observation_space.shape[0], 2) * -1
-        return torch.cat((state, padding_tensor.to(device)), dim=0)
+        temp = torch.cat((state, padding_tensor.to(device)), dim=0)
+        return temp
     else:
         padding_tensor = torch.ones(
             env.observation_space.shape[1], padding, 2) * -1
-        return torch.cat((state, padding_tensor.to(device)), dim=1)
-
+        temp = torch.cat((state, padding_tensor.to(device)), dim=1)
+        return temp
 
 def train(env, args):
     if args.experiment and args.wandb:
@@ -182,13 +183,13 @@ def train(env, args):
     # in a scenario where the observation is not square
     if args.observation_type == "pixel":
         padding_required = env.observation_space.shape[0] != env.observation_space.shape[1]
+        input_size = max(env.observation_space.shape[0], env.observation_space.shape[1])
     else:
         padding_required = False
+        input_size = env.observation_space.shape[0]
 
     # make input_size take value from the environment
     hidden_size = 16
-
-    input_size = env.observation_space.shape[0]
 
     # and make hidden_size a variable parameter based on the input_size
     model = ActorCritic(input_size=input_size, hidden_size1=hidden_size, hidden_size2=32, hidden_size3=128,
@@ -209,7 +210,7 @@ def train(env, args):
         # reset environment and episode reward
         if padding_required:
             state = add_padding(env, torch.FloatTensor(
-                env.reset())).unsqueeze(0).to(device)
+                env.reset()).to(device)).unsqueeze(0)
         else:
             state = torch.FloatTensor(env.reset()).unsqueeze(0).to(device)
 
@@ -225,7 +226,7 @@ def train(env, args):
             next_state, reward, done, _ = env.step(action)
             if padding_required:
                 next_state = add_padding(env, torch.FloatTensor(
-                    next_state)).unsqueeze(0).to(device)
+                    next_state).to(device)).unsqueeze(0)
             else:
                 next_state = torch.FloatTensor(
                     next_state).unsqueeze(0).to(device)
