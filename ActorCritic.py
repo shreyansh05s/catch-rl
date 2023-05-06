@@ -161,12 +161,12 @@ def add_padding(env, state):
 
     if env.observation_space.shape[0] > env.observation_space.shape[1]:
         padding_tensor = torch.ones(
-            padding, env.observation_space.shape[0], 2) * -1
+            padding, env.observation_space.shape[0], 2) * 0
         temp = torch.cat((state, padding_tensor.to(device)), dim=0)
         return temp
     else:
         padding_tensor = torch.ones(
-            env.observation_space.shape[1], padding, 2) * -1
+            env.observation_space.shape[1], padding, 2) * 0
         temp = torch.cat((state, padding_tensor.to(device)), dim=1)
         return temp
 
