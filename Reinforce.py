@@ -164,7 +164,7 @@ def train(env,args):   #( agent, num_episodes=1000, max_steps=250, print_interva
         if args.wandb:
             wandb.log({'Average rewards': np.mean(total_rewards)})
             wandb.log({'Max rewards': np.max(total_rewards)})
-            
+
     if args.wandb:
         wandb.finish()
         
