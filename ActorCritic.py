@@ -170,12 +170,11 @@ def add_padding(env, state):
         temp = torch.cat((state, padding_tensor.to(device)), dim=1)
         return temp
 
+
 def train(env, args):
     if args.experiment and args.wandb:
         wandb.init(project=args.wandb_project, config=args,
                    group=args.group, job_type=args.job_type)
-        # add optimal reward as a reference to wandb graphs
-        # wandb.run.tags = [f"Optimal Reward: {args.optimal_reward}"]
 
     global model, optimizer, scheduler
 
@@ -183,7 +182,8 @@ def train(env, args):
     # in a scenario where the observation is not square
     if args.observation_type == "pixel":
         padding_required = env.observation_space.shape[0] != env.observation_space.shape[1]
-        input_size = max(env.observation_space.shape[0], env.observation_space.shape[1])
+        input_size = max(
+            env.observation_space.shape[0], env.observation_space.shape[1])
     else:
         padding_required = False
         input_size = env.observation_space.shape[0]

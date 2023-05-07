@@ -5,6 +5,7 @@ import argparse
 from copy import deepcopy
 import json
 import math
+import experiments_config
 
 # models
 models = {
@@ -96,9 +97,6 @@ def run_experiment(experiment, job_type=None, num_of_repeats=10):
 if __name__ == "__main__":
     run_all = False
     job_type = None
-    ############
-    # also add team name as an argument to run_experiment
-    ############
 
     parser = argparse.ArgumentParser(
         description='Experiments for Catch environment')
@@ -115,8 +113,7 @@ if __name__ == "__main__":
         run_all = True
 
     # load experiments from json file
-    with open("experiments.json", "r") as f:
-        experiments = json.load(f)
+    experiments = experiments_config.experiments
 
     if run_all:
         for key, experiment in experiments.items():

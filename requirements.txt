@@ -1,2 +1,5 @@
 wandb
 torch
+numpy
+matplotlib
+gymnaisum
