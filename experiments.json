@@ -551,6 +551,17 @@
             "columns": 7,
             "speed": 0.5,
             "normalize_graph": true
+        },
+        {
+            "group": "Env-variations",
+            "job_type": "Env-7X7-speed-2-vector",
+            "model": "ActorCritic",
+            "observation_type": "vector",
+            "env": "default2",
+            "rows": 7,	
+            "columns": 7,
+            "speed": 2,
+            "normalize_graph": true
         }
     ]
 }
