@@ -350,7 +350,24 @@
                 "entropy_reg": true,
                 "max_steps": 250
             }
-        }
+        },
+        {
+            "group": "Entropy-Reinforce",
+            "job_type": "Reinforce-no-entropy",
+            "model": "Reinforce",
+            "observation_type": "pixel",
+            "env": "default",
+            "hyperparameter": {
+                "lr": 0.001,
+                "gamma": 0.85,
+                "hidden_size": 128,
+                "num_episodes": 1000,
+                "beta": 0.1,
+                "entropy_reg": false,
+                "max_steps": 250
+            }
+        }  
+        
     ],
     "ObservationType": [
         {

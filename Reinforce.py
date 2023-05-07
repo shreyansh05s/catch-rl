@@ -179,7 +179,7 @@ def create_env(rows=7, columns=7, speed=1.0, max_steps=250, max_misses=10, obser
 if __name__ == '__main__':    
     parser = argparse.ArgumentParser(description='Train an Reinforce agent for the Catch environment')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
-    parser.add_argument('--gamma', type=float, default=0.7, help='discount factor')
+    parser.add_argument('--gamma', type=float, default=0.85, help='discount factor')
     parser.add_argument('--hidden_size', type=int, default=128, help='size of the hidden layer')
     parser.add_argument('--num_episodes', type=int, default=1000, help='number of episodes to train')
     parser.add_argument('--print_interval', type=int, default=100, help='interval between training status logs')
