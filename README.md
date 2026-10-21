@@ -1,118 +1,92 @@
-# Policy Gradient Methods for Catch
+<p align="center">
+  <img src="assets/banner.svg" alt="Catch RL — policy-gradient agents learning to catch falling balls" width="100%" />
+</p>
 
-## Setup
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/language-Python-3776AB?logo=python&logoColor=white" alt="Language: Python" /></a>
+  <img src="https://img.shields.io/badge/status-research%20project-7C3AED" alt="Status: research project" />
+  <img src="https://img.shields.io/badge/methods-REINFORCE%20%7C%20Actor--Critic-12B981" alt="Methods: REINFORCE and Actor-Critic" />
+</p>
 
-### Create Virtual Environment
+**Catch RL** is a compact reinforcement-learning sandbox where policy-gradient agents learn to position a paddle beneath falling balls. It combines a configurable grid environment with PyTorch implementations of REINFORCE and actor–critic, letting you compare observation formats, exploration settings, bootstrapping, and environment dynamics.
+
+## Highlights
+
+- A custom Catch environment with left, idle, and right actions.
+- Configurable board dimensions, drop speed, episode length, and miss limit.
+- Two policy-gradient implementations: REINFORCE and actor–critic.
+- Pixel-board and compact vector observation modes.
+- Preset experiment configurations, optional rendering, and optional Weights & Biases logging.
+
+## How it works
+
+```mermaid
+flowchart LR
+  E[Catch grid] --> O[Pixel or vector state]
+  O --> P[PyTorch policy]
+  P --> A[Left · Idle · Right]
+  A --> E
+  E --> R[Catch +1 · Miss -1]
+  R --> U[Policy update]
+  U --> P
+```
+
+A ball enters at the top of the grid while the agent controls a bottom-row paddle. Catching a ball returns `+1`; missing one returns `-1`. An episode ends at the configured step limit or after the configured number of misses.
+
+## Tech stack
+
+| Area | Tools |
+| --- | --- |
+| Learning agents | Python, PyTorch |
+| Environment | NumPy, Gym spaces |
+| Rendering | Matplotlib |
+| Experiment tracking | Weights & Biases |
+| Experiment runner | `argparse`, configuration presets |
+
+## Quick start
+
 ```bash
 python -m venv venv
 ```
-### Activate Virtual Environment
 
-#### Windows
-```bash
-venv\Scripts\activate
-```
-
-#### Linux
-```bash
-source venv/bin/activate
-```
-
-### Install Dependencies
-```bash
+```powershell
+# Windows PowerShell
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
+Train either included baseline with its default arguments:
 
-### Wandb login
-This project uses [wandb](https://wandb.ai/) for logging. To use wandb, you must first login to your account. To login, run the following command:
-```bash
-wandb login
-```
-#
-## Running the Code
-
-### Reinforce
-This will run the baseline Reinforce algorithm with the default hyperparameters.
 ```bash
 python Reinforce.py
-```
-
-### Actor-Critic
-This will run the baseline Actor-Critic algorithm with the default hyperparameters.
-```bash
 python ActorCritic.py
 ```
-hyperparameters can be changed by passing in the following arguments (all arguments are optional and this is a combined list of all arguments that can be passed in to the `ActorCritic.py` file or the `Reinforce.py` file)
-- `--lr`: learning rate
-- `--gamma`: discount factor
-- `--num_episodes`: number of episodes to train for
-- `--num_steps`: number of steps to train for
-- `--seed`: random seed
-- `--render`: whether to render the environment
-- `--wandb`: whether to log to wandb
-- `--wandb_project`: the name of the wandb project to log to
-- `--n_steps`: number of steps to take before updating the policy
-- `--bootstrap`: whether to use bootstrapping
-- `--baseline`: whether to use a baseline
-- `--entropy_regularization`: whether to use entropy regularization
-- `--entropy_weight`: the weight of the entropy regularization
-- `--normaliza_returns`: whether to normalize the returns
-- `--group`: the name of the group to log to (wandb)
-- `--job_type`: the type of job to run (wandb)
-- `--number_of_repeats`: the number of times to repeat the experiment (wandb)
-- `--lr_scheduler`: whether to use a learning rate scheduler (step decay)
-- `--lr_decay`: the decay rate of the learning rate scheduler
-- `--lr_step_size`: the step size of the learning rate scheduler
-- `--env_speed`: the speed of the environment
-- `--env_size`: the size of the environment
-- `--env_max_steps`: the maximum number of steps the environment can take
-- `--env_max_misses`: the maximum number of misses the environment can take
-- `--normalize_graphs`: whether to normalize the graphs for comparision of varying rewards in different environments
-- `--cpu`: whether to use the cpu
 
-#
-## Running Experiments
+Run the configured experiment suite, or select a named configuration:
 
-All experiments are run from the `experiments.py` file. The `experiments.py` file takes in three arguments:
-- `--experiment`: the name of the experiment to run
-- `--job_type`: the type of job to run (e.g. `train`, `test`, `train_and_test`)
-- `--number_of_repeats`: the number of times to repeat the experiment
-
-All experiments are defined in the `experiments.json` file. The `experiments.json` file contains a list of experiments. Each experiment has the following fields:
-- `group`: the name of the group the experiment belongs to
-- `job_type`: the type of job to run (e.g. `A2C`, `Reinforce`, `A2C-Baseline`, etc.)
-- `number_of_repeats`: the number of times to repeat the experiment
-- `model`: the name of the model to use (e.g. `ActorCritic`, `Reinforce`)
-- `observation_type`: the type of observation to use (e.g. `pixel`, `vector`)
-- `hyperparameters`: the hyperparameters to use for the experiment (all hyperparameters that can be passed into the `ActorCritic.py` or `Reinforce.py` files can be passed in here)
-
-
-### Runs all experiments
 ```bash
 python experiments.py
+python experiments.py --experiment Baseline
 ```
 
-### Runs a specific experiment
-```bash
-python experiments.py --experiment <experiment_name>
+Inspect each training script’s supported options with `python Reinforce.py --help` and `python ActorCritic.py --help`. Weights & Biases is only used when the corresponding `--wandb` argument is enabled.
+
+## Project structure
+
+```text
+catch-rl/
+├── catch.py                 # Configurable Catch environment and renderer
+├── Reinforce.py             # REINFORCE model and training entry point
+├── ActorCritic.py           # Actor–critic model and training entry point
+├── experiments.py           # Preset experiment runner
+├── experiments_config.py    # Experiment groups and hyperparameters
+├── figures/                 # Saved experiment visualizations
+├── requirements.txt         # Python dependencies
+└── assets/banner.svg        # Project banner
 ```
 
-### Runs a specific experiment with a specific job_type
-```bash
-python experiments.py --experiment <experiment_name> --job_type <job_type>
-```
+## Results & learnings
 
-### Runs a specific experiment with a specific job_type and a number_of_repeats
-```bash
-python experiments.py --experiment <experiment_name> --job_type <job_type> --number_of_repeats <number_of_repeats>
-```
+The included figures compare runs across learning rates, entropy regularization, bootstrap and baseline choices, observation types, board sizes, and ball speeds. The repository does not include a consolidated results table, so no aggregate performance claims are made here.
 
-#
-## Viewing Results
-
-### Wandb
-
-All results are logged to [wandb](https://wandb.ai/). To view the results, go to the [wandb](https://wandb.ai/) website and login. Then, go to the project you want to view and select the group you want to view. You can then view the results of each experiment by selecting the corresponding group.
-
-We would have uploaded the image of the wandb dashboard of our experiments form a visual representation on Brightspace but it does not support uploading images.
+---
