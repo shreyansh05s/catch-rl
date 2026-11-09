@@ -43,33 +43,35 @@ A ball enters at the top of the grid while the agent controls a bottom-row paddl
 | Experiment tracking | Weights & Biases |
 | Experiment runner | `argparse`, configuration presets |
 
-## Quick start
+## Installation
+
+Requires Python 3 with Tkinter (the environment uses the `TkAgg` Matplotlib backend). The Python version used originally is not recorded; `requirements.txt` is unpinned and was only lightly checked.
 
 ```bash
 python -m venv venv
-```
-
-```powershell
-# Windows PowerShell
-.\venv\Scripts\Activate.ps1
+source venv/bin/activate          # Windows PowerShell: .env\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-Train either included baseline with its default arguments:
+(Conda works too: `conda create -n catch-rl python=3.10 && conda activate catch-rl`, then `pip install -r requirements.txt`.)
+
+## Usage
+
+Train either baseline with its default arguments:
 
 ```bash
 python Reinforce.py
 python ActorCritic.py
 ```
 
-Run the configured experiment suite, or select a named configuration:
+Run the configured experiment suite, or one named configuration:
 
 ```bash
 python experiments.py
 python experiments.py --experiment Baseline
 ```
 
-Inspect each training script’s supported options with `python Reinforce.py --help` and `python ActorCritic.py --help`. Weights & Biases is only used when the corresponding `--wandb` argument is enabled.
+Inspect supported options with `python Reinforce.py --help` and `python ActorCritic.py --help`. Weights & Biases is only used when the corresponding `--wandb` argument is enabled.
 
 ## Project structure
 
@@ -82,6 +84,7 @@ catch-rl/
 ├── experiments_config.py    # Experiment groups and hyperparameters
 ├── figures/                 # Saved experiment visualizations
 ├── requirements.txt         # Python dependencies
+├── LICENSE                  # GPL-3.0
 └── assets/banner.svg        # Project banner
 ```
 
@@ -89,4 +92,15 @@ catch-rl/
 
 The included figures compare runs across learning rates, entropy regularization, bootstrap and baseline choices, observation types, board sizes, and ball speeds. The repository does not include a consolidated results table, so no aggregate performance claims are made here.
 
----
+## Limitations
+
+- No consolidated results table; figures come from single runs per configuration.
+- Dependencies are unpinned.
+
+## Licence
+
+Released under the GNU GPL v3.0, see [LICENSE](LICENSE). Exception: `catch.py` extends a Catch environment written by Thomas Moerland (Leiden University, 2022) for a course, and carries no licence of its own; it remains under its original author's terms.
+
+## Author
+
+Shreyansh Sharma ([@shreyansh05s](https://github.com/shreyansh05s)), with contributions from course project teammates.

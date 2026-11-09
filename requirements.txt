@@ -1,5 +1,5 @@
-wandb
 torch
 numpy
 matplotlib
-gymnaisum
+gym
+wandb

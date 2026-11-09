@@ -2,4 +2,8 @@
 *venv*
 *wandb*
 *Zone.Identifier*
-```
+.DS_Store
+.ipynb_checkpoints/
+*.pt
+*.pth
+*.pdf
