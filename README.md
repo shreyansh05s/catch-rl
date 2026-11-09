@@ -49,7 +49,7 @@ Requires Python 3 with Tkinter (the environment uses the `TkAgg` Matplotlib back
 
 ```bash
 python -m venv venv
-source venv/bin/activate          # Windows PowerShell: .envScriptsActivate.ps1
+source venv/bin/activate          # Windows PowerShell: .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
